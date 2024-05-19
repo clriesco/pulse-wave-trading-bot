@@ -14,13 +14,11 @@ import { isAxiosError } from './utils';
 const BASE_URL = 'https://e1.trdngbcknd.com';
 const USER_AGENT =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
-const CUSTOM_DEVICEID = QUANTFURY_DEVICEID;
-const TOKEN = QUANTFURY_TOKEN;
 
 const headers = {
-  Authorization: `Bearer ${TOKEN}`,
+  Authorization: `Bearer ${QUANTFURY_TOKEN}`,
   'Content-Type': 'application/json',
-  'Custom-Deviceid': CUSTOM_DEVICEID,
+  'Custom-Deviceid': QUANTFURY_DEVICEID,
   'Custom-Platform': '3',
   Accept: 'application/json, text/plain, */*',
   'User-Agent': USER_AGENT,
