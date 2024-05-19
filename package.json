@@ -1,7 +1,7 @@
 {
   "name": "cpi-strategy",
   "version": "1.0.0",
-  "description": "",
+  "description": "The CPI Trading Strategy project is a trading bot that executes trades based on the Consumer Price Index (CPI) data from the Bureau of Labor Statistics. The algorithm utilizes proxies to scrape CPI data and executes trading strategies on the Quantfury platform depending on the CPI value obtained.",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -17,7 +17,7 @@
     "url": "git+https://github.com/clriesco/cpi-strategy.git"
   },
   "author": "Charly López",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/clriesco/cpi-strategy/issues"
   },
