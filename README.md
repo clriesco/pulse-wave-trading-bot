@@ -27,14 +27,14 @@ The CPI Trading Strategy project is a trading bot that executes trades based on 
 
 1. Clone the Repository:
 
-   ```bash
+   ```
    git clone https://github.com/clriesco/cpi-strategy.git
    cd cpi-strategy
    ```
 
 2. Install Dependencies:
 
-   ```bash
+   ```
    npm install
    ```
 
@@ -42,7 +42,7 @@ The CPI Trading Strategy project is a trading bot that executes trades based on 
 
    Create a .env file in the root directory and add the following environment variables:
 
-   ```plaintext
+   ```
    WEB_SHARE_API_KEY=your_webshare_api_key
    PROXY_API_URL=https://proxy.webshare.io/api/v2/proxy/list
    CPI_URL=https://data.bls.gov/timeseries/CUSR0000SA0&output_view=pct_1mth
@@ -68,21 +68,21 @@ The CPI Trading Strategy project is a trading bot that executes trades based on 
 
 ### Build the Project:
 
-    ```bash
+    ```
     npm run build
     ```
 
 ### Start the Project:
 
-    ```bash
+    ```
     npm start
     ```
 
 ### Debug the Project:
 
-    To start the project in debug mode:
+To start the project in debug mode:
 
-    ```bash
+    ```
     npm run debug
     ```
 
