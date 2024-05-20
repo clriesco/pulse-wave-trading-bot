@@ -35,6 +35,56 @@ export interface TargetOrder {
   amount: number;
 }
 
+export interface Price {
+  priceAsk: number;
+  priceBid: number;
+  priceId: string;
+}
+
+export interface QuantfuryResponse {
+  code: 'Success' | 'Error';
+  data: PositionResponseData;
+  isSuccess: boolean;
+}
+
+export interface PositionResponseData {
+  id: string;
+  closedPositionPnlAccount: number;
+  operationPrice: number;
+  position: PositionData;
+}
+
+export interface GetPositionsResponse {
+  code: 'Success' | 'Error';
+  data: PositionResponseData[];
+  isSuccess: boolean;
+}
+
+export enum OrderType {
+  STOP = 0,
+  TARGET = 1,
+}
+
+export interface PositionData {
+  amountInstrument: number;
+  amountSystem: number;
+  commissionSaved: number;
+  id: string;
+  investedAmountInstrument: number;
+  isAverageOpenPrice: boolean;
+  openDate: string;
+  openPrice: number;
+  positionType: number;
+  quantity: number;
+  scalpingModeEndDate: number;
+  sessionId: string;
+  shortName: string;
+  spreadAdjustmentEndDate: number;
+  stopOrders: StopOrder[];
+  targetOrders: TargetOrder[];
+  tradingMode: number;
+}
+
 export interface APIResponse<T> {
   data: T;
   status: number;

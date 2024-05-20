@@ -1,12 +1,9 @@
 // src/scraper.ts
 import axios from 'axios';
 import cheerio from 'cheerio';
-import { CPI_URL } from './config';
+import { CPI_URL, NUM_ROWS, NUM_COLUMNS } from './config';
 import { Proxy } from './types';
 import { HttpsProxyAgent } from 'https-proxy-agent';
-
-const NUM_ROWS = 12;
-const NUM_COLUMNS = 4;
 
 /**
  * Fetches the CPI value from the specified URL using the given proxy.

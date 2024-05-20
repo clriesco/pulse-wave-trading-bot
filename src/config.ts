@@ -13,5 +13,12 @@ export const CPI_URL =
   process.env.CPI_URL ||
   'https://data.bls.gov/timeseries/CUSR0000SA0&output_view=pct_1mth';
 export const CHECK_INTERVAL_SECONDS =
-  Number(process.env.CHECK_INTERVAL_SECONDS) || 10;
-export const VALUE_THRESHOLD = Number(process.env.VALUE_THRESHOLD) || 0.5;
+  Number(process.env.CHECK_INTERVAL_SECONDS) || 1;
+export const VALUE_THRESHOLD = Number(process.env.VALUE_THRESHOLD) || 0.5; // Expected CPI value
+export const NUM_ROWS = Number(process.env.NUM_ROWS) || 12; //Row nr 12, corresponding to 2024
+export const NUM_COLUMNS = Number(process.env.NUM_COLUMNS) || 4; //Column nr 4, corresponding to CPI April 2024, announced in May 2024
+export const AMOUNT = Number(process.env.AMOUNT) || 100; // Amount to trade in USDT
+export const STOP_LOSS_PERCENTAGE =
+  Number(process.env.STOP_LOSS_PERCENTAGE) || 0.003; // 0.3% stop loss
+export const TAKE_PROFIT_PERCENTAGE =
+  Number(process.env.TAKE_PROFIT_PERCENTAGE) || 0.01; // 1% take profit
