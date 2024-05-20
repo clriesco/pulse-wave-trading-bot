@@ -21,11 +21,27 @@ import {
 
 const mock = new MockAdapter(axios);
 
+/**
+ * Tests for the Quantfury API functions.
+ * Summary:
+ * - getCurrentPrice should fetch the current price.
+ * - openMarketLongPosition should open a long position.
+ * - openExtendedMarketLongPosition should open an extended long position with stop and target orders.
+ * - openMarketShortPosition should open a short position.
+ * - openExtendedMarketShortPosition should open an extended short position with stop and target orders.
+ * - closePosition should close a position.
+ * - reducePosition should reduce a position.
+ */
 describe('Quantfury API', () => {
   afterEach(() => {
     mock.reset();
   });
 
+  /**
+   * Test for getCurrentPrice function.
+   *
+   * It should fetch the current price. Axios is mocked to return a mock price.
+   */
   test('getCurrentPrice should fetch the current price', async () => {
     const mockPrice: Price = {
       priceAsk: 66884.16,
@@ -41,6 +57,11 @@ describe('Quantfury API', () => {
     expect(price).toEqual(mockPrice);
   });
 
+  /**
+   * Test for openMarketLongPosition function.
+   *
+   * It should open a long position. Axios is mocked to return a mock response.
+   */
   test('openMarketLongPosition should open a long position', async () => {
     const mockResponse: QuantfuryResponse = {
       code: 'Success',
@@ -87,6 +108,11 @@ describe('Quantfury API', () => {
     expect(response).toEqual(mockResponse.data);
   });
 
+  /**
+   * Test for openExtendedMarketLongPosition function.
+   *
+   * It should open an extended long position with stop and target orders. Axios is mocked to return a mock response.
+   */
   test('openExtendedMarketLongPosition should open an extended long position with stop and target orders', async () => {
     const stopOrder: StopOrder = { price: 66200, amount: 1 };
     const targetOrder: TargetOrder = { price: 67000, amount: 1 };
@@ -139,6 +165,11 @@ describe('Quantfury API', () => {
     expect(response).toEqual(mockResponse.data);
   });
 
+  /**
+   * Test for openMarketShortPosition function.
+   *
+   * It should open a short position. Axios is mocked to return a mock response.
+   */
   test('openMarketShortPosition should open a short position', async () => {
     const mockResponse: QuantfuryResponse = {
       code: 'Success',
@@ -185,6 +216,11 @@ describe('Quantfury API', () => {
     expect(response).toEqual(mockResponse.data);
   });
 
+  /**
+   * Test for openExtendedMarketShortPosition function.
+   *
+   * It should open an extended short position with stop and target orders. Axios is mocked to return a mock response.
+   */
   test('openExtendedMarketShortPosition should open an extended short position with stop and target orders', async () => {
     const stopOrder: StopOrder = { price: 51000, amount: 1 };
     const targetOrder: TargetOrder = { price: 49000, amount: 1 };
@@ -237,28 +273,66 @@ describe('Quantfury API', () => {
     expect(response).toEqual(mockResponse.data);
   });
 
+  /**
+   * Test for closePosition function.
+   *
+   * It should close a position. Axios is mocked to return a mock response.
+   */
   test('closePosition should close a position', async () => {
+    const mockPositions = [
+      {
+        amountInstrument: 20,
+        amountSystem: 20,
+        commissionSaved: 0,
+        id: 'mockPositionId',
+        investedAmountInstrument: 1,
+        isAverageOpenPrice: false,
+        openDate: new Date().toISOString(),
+        openPrice: 66900,
+        positionType: 1,
+        quantity: 0.000299267602,
+        scalpingModeEndDate: 1716195572495,
+        sessionId: 'mockSessionId',
+        shortName: 'BTC/USDT',
+        spreadAdjustmentEndDate: 1716191972499,
+        stopOrders: [],
+        targetOrders: [],
+        tradingMode: 0,
+      },
+    ];
     const mockResponse = {
       id: 'mockPositionId',
       priceId: 'mockPriceId',
     };
 
     mock
+      .onPost('https://l1.trdngbcknd.com/v11/positions')
+      .reply(200, {
+        data: mockPositions,
+      })
       .onPost('https://l1.trdngbcknd.com/v11/positions/close')
       .reply(200, {
         data: mockResponse,
       })
-      .onPost('https://l1.trdngbcknd.com/v11/price')
-      .reply(200, {
-        data: [{ a: 66884.16, b: 66884.15, id: 'mockPriceId' }],
-      })
       .onAny()
       .passThrough();
 
-    const response = await closePosition('mockPositionId');
+    const positions = await getPositions();
+    expect(positions).toEqual(mockPositions);
+
+    if ('error' in positions) {
+      throw new Error(`Failed to fetch positions: ${positions.error}`);
+    }
+
+    const response = await closePosition(positions[0].id);
     expect(response).toEqual(mockResponse);
   });
 
+  /**
+   * Test for reducePosition function.
+   *
+   * It should reduce a position. Axios is mocked to return a mock response.
+   */
   test('reducePosition should reduce a position', async () => {
     const mockPositions = [
       {

@@ -11,6 +11,7 @@ import {
   Price,
   QuantfuryResponse,
   GetPositionsResponse,
+  PositionResponseData,
   type OrderType,
 } from './types';
 import { isAxiosError } from './utils';
@@ -422,11 +423,13 @@ export async function getCurrentPrice(): Promise<Price | null> {
  *
  * @returns {Promise<QuantfuryResponse | APIError>} A promise that resolves to the API response or an error.
  */
-export async function getPositions(): Promise<GetPositionsResponse | APIError> {
+export async function getPositions(): Promise<
+  PositionResponseData[] | APIError
+> {
   const url = `${BASE_URL}/positions`;
 
   try {
-    const response = await axios.post<APIResponse<GetPositionsResponse>>(url, {
+    const response = await axios.post<GetPositionsResponse>(url, {
       headers,
     });
     return response.status === 200
