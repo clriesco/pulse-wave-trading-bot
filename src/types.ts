@@ -12,6 +12,16 @@ export interface Proxy {
   created_at: string;
 }
 
+export interface AxiosProxyConfig {
+  protocol: string;
+  host: string;
+  port: number;
+  auth: {
+    username: string;
+    password: string;
+  };
+}
+
 export interface PositionPayload {
   priceId: string;
   price?: number;
@@ -21,8 +31,10 @@ export interface PositionPayload {
   };
   positionType: number;
   shortName: string;
-  stopOrder?: StopOrder[];
-  targetOrder?: TargetOrder[];
+  stopOrders?: StopOrder[];
+  targetOrders?: TargetOrder[];
+  stopOrder?: number;
+  targetOrder?: number;
 }
 
 export interface StopOrder {
@@ -41,10 +53,17 @@ export interface Price {
   priceId: string;
 }
 
+export interface APIError {
+  error: string;
+  code: string;
+  status_code?: number;
+}
+
 export interface QuantfuryResponse {
   code: 'Success' | 'Error';
   data: PositionResponseData;
   isSuccess: boolean;
+  error?: string;
 }
 
 export interface PositionResponseData {
@@ -94,15 +113,15 @@ export interface APIResponse<T> {
   request?: any;
 }
 
-export interface APIError {
-  error: string;
-  code: string;
-  status_code?: number;
-}
-
 export interface ProxyAPIResponse {
   count: number;
   next: string | null;
   previous: string | null;
   results: Proxy[];
+}
+
+export interface AxiosConfig {
+  headers: Record<string, string>;
+  httpAgent?: any;
+  httpsAgent?: any;
 }

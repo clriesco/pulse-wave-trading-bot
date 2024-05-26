@@ -1,4 +1,4 @@
-# CPI Trading Strategy
+# Economic News Based Trading Strategy
 
 ## Author
 
@@ -15,7 +15,8 @@ The CPI Trading Strategy project is a trading bot that executes trades based on 
 
 - Proxy Rotation: Utilizes a pool of proxies to scrape CPI data, rotating between them to avoid rate limits and blocking.
 - CPI Data Scraping: Fetches CPI data from the Bureau of Labor Statistics website.
-- Trading Strategy Execution: Executes long or short trades based on the CPI value compared to a predefined threshold.
+- GDP Data Scraping: Fetches GDP data from the Bureau of Economic Analysis.
+- Trading Strategy Execution: Executes long or short trades based on the CPI or GDP value compared to a predefined threshold.
 - Error Handling: Includes robust error handling to manage failed requests and retries.
 
 ## Prerequisites
@@ -43,7 +44,7 @@ The CPI Trading Strategy project is a trading bot that executes trades based on 
    Create a .env file in the root directory and add the following environment variables:
 
    ```
-   WEB_SHARE_API_KEY=your_webshare_api_key
+   WEBSHARE_API_KEY=your_webshare_api_key
    PROXY_API_URL=https://proxy.webshare.io/api/v2/proxy/list
    CPI_URL=https://data.bls.gov/timeseries/CUSR0000SA0&output_view=pct_1mth
    CHECK_INTERVAL_SECONDS=10
@@ -56,7 +57,7 @@ The CPI Trading Strategy project is a trading bot that executes trades based on 
 
 ### Environment Variables
 
-- **WEB_SHARE_API_KEY**: API key for accessing WebShare proxy services.
+- **WEBSHARE_API_KEY**: API key for accessing WebShare proxy services.
 - **PROXY_API_URL**: URL for fetching the list of proxies from WebShare.
 - **CPI_URL**: URL for fetching CPI data.
 - **CHECK_INTERVAL_SECONDS**: Interval in seconds for checking CPI data.
