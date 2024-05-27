@@ -1,4 +1,22 @@
 // src/quantfury.ts
+/* -*- coding: utf-8 -*-
+ * ------------------------------------------------------------------------------
+ *
+ *   Copyright 2024 Charly López
+ *
+ *   Licensed under the Apache License, Version 2.0 (the "License");
+ *   you may not use this file except in compliance with the License.
+ *   You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *   Unless required by applicable law or agreed to in writing, software
+ *   distributed under the License is distributed on an "AS IS" BASIS,
+ *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *   See the License for the specific language governing permissions and
+ *   limitations under the License.
+ *
+ * ------------------------------------------------------------------------------*/
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import fakeUserAgent from 'fake-useragent';
@@ -80,13 +98,13 @@ export async function init(proxy: Proxy | null) {
 }
 
 /**
- * Opens a limit position.
+ * Opens a limit position. If stop and target orders are provided, an extended position is opened.
  *
  * @param {number} price - The price at which to open the position.
  * @param {number} amount - The amount of the instrument.
  * @param {number} [direction=1] - The direction of the position, 1 for long and 2 for short.
- * @param {StopOrder[]} [stop=[]] - The stop orders.
- * @param {TargetOrder[]} [target=[]] - The target orders.
+ * @param {number | null} [stop=null] - The stop orders.
+ * @param {number | null} [target=null] - The target orders.
  * @returns {Promise<QuantfuryResponse | APIError>} A promise that resolves to the API response or an error.
  */
 async function openLimitPosition(
@@ -178,8 +196,8 @@ export async function openLimitShortPosition(
  *
  * @param {number} price - The price at which to open the position.
  * @param {number} amount - The amount of the instrument.
- * @param {StopOrder[]} stop - The stop orders.
- * @param {TargetOrder[]} target - The target orders.
+ * @param {number} stop - The stop order.
+ * @param {number} target - The target order.
  * @returns {Promise<QuantfuryResponse | APIError>} A promise that resolves to the API response or an error.
  */
 export async function openExtendedLimitLongPosition(
@@ -247,7 +265,7 @@ export async function cancelLimitPosition(
 }
 
 /**
- * Opens a market position.
+ * Opens a market position. If stop and target orders are provided, an extended position is opened.
  *
  * @param {number} amount - The amount of the instrument.
  * @param {number} [direction=1] - The direction of the position, 1 for long and 2 for short.
@@ -372,6 +390,8 @@ export async function openExtendedMarketShortPosition(
  *
  * @param {string} id - The ID of the trading position to update.
  * @param {orderType} orderType - The type of order to update, 1 for target and 0 for stop.
+ * @param {number} price - The price of the order.
+ * @param {number} amount - The amount of the instrument.
  * @returns {Promise<QuantfuryResponse | APIError>} A promise that resolves to the API response or an error.
  */
 export async function reducePosition(

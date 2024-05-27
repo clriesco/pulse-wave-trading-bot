@@ -1,7 +1,7 @@
 {
-  "name": "cpi-strategy",
+  "name": "pulse-wave-trading-bot",
   "version": "1.0.0",
-  "description": "The CPI Trading Strategy project is a trading bot that executes trades based on the Consumer Price Index (CPI) data from the Bureau of Labor Statistics. The algorithm utilizes proxies to scrape CPI data and executes trading strategies on the Quantfury platform depending on the CPI value obtained.",
+  "description": "The Pulse Wave Trading Bot project is a trading bot that executes trades based on several finance news from official institutions. The algorithm utilizes proxies to scrape data and executes trading strategies on the Quantfury platform depending on the value obtained.",
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
@@ -14,14 +14,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/clriesco/cpi-strategy.git"
+    "url": "git+https://github.com/clriesco/pulse-wave-trading-bot.git"
   },
   "author": "Charly López",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/clriesco/cpi-strategy/issues"
+    "url": "https://github.com/clriesco/pulse-wave-trading-bot/issues"
   },
-  "homepage": "https://github.com/clriesco/cpi-strategy#readme",
+  "homepage": "https://github.com/clriesco/pulse-wave-trading-bot#readme",
   "devDependencies": {
     "@eslint/js": "^8.57.0",
     "@types/cheerio": "^0.22.35",
