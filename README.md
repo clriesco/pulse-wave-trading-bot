@@ -1,4 +1,5 @@
-# Economic News Based Trading Strategy
+# PULSE WAVE TRADING BOT
+## Economic News Based Trading Strategy
 
 ## Author
 
