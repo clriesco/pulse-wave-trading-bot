@@ -8,6 +8,8 @@ import {
   CPI_NUM_COLUMNS,
   GDP_URL,
   GDP_OLD_STAGE,
+  PCE_URL,
+  PCE_OLD_STAGE,
 } from './config';
 import { Proxy } from './types';
 import { HttpsProxyAgent } from 'https-proxy-agent';
@@ -95,6 +97,58 @@ export async function checkGDPValue(
     return isNaN(value) ? null : value;
   } catch (error) {
     logger.error(`Error fetching or parsing GDP data: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches the PCE Price Index value from the specified URL using the given proxy.
+ *
+ * @param {Proxy} proxy - The proxy configuration to use for the request.
+ * @returns {Promise<number | null>} A promise that resolves to the PCE price indexvalue or null if not found.
+ * @throws Will throw an error if the request fails.
+ */
+export async function checkPCEValue(
+  proxy: Proxy | null
+): Promise<number | null> {
+  try {
+    let response;
+    if (proxy !== null) {
+      const proxyUrl = `http://${proxy.username}:${proxy.password}@${proxy.proxy_address}:${proxy.port}`;
+      const agent = new HttpsProxyAgent(proxyUrl);
+
+      logger.debug(`Checking PCE value using proxy ${proxy.proxy_address}.`);
+      response = await axios.get<string>(PCE_URL, {
+        httpAgent: agent,
+        httpsAgent: agent,
+      });
+    } else {
+      response = await axios.get<string>(PCE_URL);
+    }
+    const html = response.data;
+    const $ = cheerio.load(html);
+
+    const cellName = $('.bea-special')
+      .eq(0)
+      .find('td:first-child')
+      .eq(0)
+      .text();
+    if (cellName.trim().includes(PCE_OLD_STAGE)) {
+      logger.error(`Data not available yet. Still in ${PCE_OLD_STAGE} stage.`);
+      return null;
+    }
+
+    const cellValue = $('.bea-special')
+      .eq(0)
+      .find('td:nth-child(2)')
+      .eq(0)
+      .text();
+    const value = parseFloat(cellValue.replace('\n', '').trim());
+
+    logger.debug(`PCE value: ${value}`);
+    return isNaN(value) ? null : value;
+  } catch (error) {
+    logger.error(`Error fetching or parsing PCE data: ${error}`);
     return null;
   }
 }

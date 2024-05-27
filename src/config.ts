@@ -31,6 +31,14 @@ export const GDP_VALUE_THRESHOLD =
   Number(process.env.GDP_VALUE_THRESHOLD) || 1.3; // Expected GDP value
 export const GDP_OLD_STAGE = process.env.GDP_OLD_STAGE || '(Adv)'; // Old stage of the GDP value announcement
 
+//PCE
+export const PCE_URL =
+  process.env.PCE_URL ||
+  'https://www.bea.gov/data/personal-consumption-expenditures-price-index'; // Personal Consumption Expenditures
+export const PCE_VALUE_THRESHOLD =
+  Number(process.env.PCE_VALUE_THRESHOLD) || 2.6; // Expected PCE value
+export const PCE_OLD_STAGE = process.env.PCE_OLD_STAGE || 'March 2024'; // Old stage of the PCE value announcement
+
 //Strategy
 export const ACTIVE_ALGORITHM = process.env.ACTIVE_ALGORITHM || 'GDP'; // 'CPI' or 'GDP'
 export const AMOUNT = Number(process.env.AMOUNT) || 100; // Amount to trade in USDT

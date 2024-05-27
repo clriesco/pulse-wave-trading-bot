@@ -9,6 +9,7 @@ import { Proxy } from './types';
 import {
   CPI_VALUE_THRESHOLD,
   GDP_VALUE_THRESHOLD,
+  PCE_VALUE_THRESHOLD,
   AMOUNT,
   CHECK_INTERVAL_SECONDS,
   STRATEGY_PROXY_INDEX,
@@ -168,6 +169,56 @@ export async function executeGDPTradingStrategy(
   } else {
     logger.info(
       `GDP value ${gdpValue} is around the threshold. No action taken.`
+    );
+  }
+}
+
+/**
+ * Executes the trading strategy based on the PCE Price Index value.
+ *
+ * @param {number | null} pceValue - The PCE Price Index value to base the trading strategy on. If null, no action is taken.
+ * @param {Proxy | null} proxy - The proxy to use for the trading strategy.
+ */
+export async function executePCETradingStrategy(
+  pceValue: number | null,
+  proxy: Proxy | null
+) {
+  if (pceValue === null) {
+    logger.error('No value found in the specified cell.');
+    return;
+  }
+
+  if (pceValue > PCE_VALUE_THRESHOLD + 0.2) {
+    logger.info(
+      `PCE Price Index value ${pceValue} is above the threshold. Executing SHORT strategy.`
+    );
+
+    await initQuantfury(proxy);
+    const ret = await openMarketShortPosition(AMOUNT);
+    if ('data' in ret) {
+      logger.info(
+        `Successfully executed SHORT strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
+      );
+    } else {
+      logger.error('Error executing SHORT strategy:', ret.error);
+    }
+  } else if (pceValue < PCE_VALUE_THRESHOLD - 0.2) {
+    logger.info(
+      `PCE Price Index value ${pceValue} is below the threshold. Executing LONG strategy.`
+    );
+
+    await initQuantfury(proxy);
+    const ret = await openMarketLongPosition(AMOUNT);
+    if ('data' in ret) {
+      logger.info(
+        `Successfully executed LONG strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
+      );
+    } else {
+      logger.error('Error executing LONG strategy:', ret.error);
+    }
+  } else {
+    logger.info(
+      `PCE Price Index value ${pceValue} is around the threshold. No action taken.`
     );
   }
 }

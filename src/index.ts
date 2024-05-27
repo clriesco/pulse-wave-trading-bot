@@ -1,9 +1,10 @@
 import logger from './logger';
-import { checkCPIValue, checkGDPValue } from './scraper';
+import { checkCPIValue, checkGDPValue, checkPCEValue } from './scraper';
 import {
   launchAlgorithm,
   executeCPITradingStrategy,
   executeGDPTradingStrategy,
+  executePCETradingStrategy,
 } from './strategy';
 import { ACTIVE_ALGORITHM } from './config';
 
@@ -16,6 +17,10 @@ async function main() {
     case 'GDP':
       logger.info('Using GDP trading strategy.');
       await launchAlgorithm('GDP', checkGDPValue, executeGDPTradingStrategy);
+      break;
+    case 'PCE':
+      logger.info('Using PCE trading strategy.');
+      await launchAlgorithm('PCE', checkPCEValue, executePCETradingStrategy);
       break;
     default:
       logger.error('Invalid trading strategy:', ACTIVE_ALGORITHM);
