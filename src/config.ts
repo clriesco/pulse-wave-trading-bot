@@ -29,6 +29,7 @@ export const GDP_URL =
   process.env.GDP_URL || 'https://www.bea.gov/data/gdp/gross-domestic-product';
 export const GDP_VALUE_THRESHOLD =
   Number(process.env.GDP_VALUE_THRESHOLD) || 1.3; // Expected GDP value
+export const GDP_OLD_STAGE = process.env.GDP_OLD_STAGE || '(Adv)'; // Old stage of the GDP value announcement
 
 //Strategy
 export const ACTIVE_ALGORITHM = process.env.ACTIVE_ALGORITHM || 'GDP'; // 'CPI' or 'GDP'

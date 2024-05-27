@@ -2,7 +2,13 @@
 import axios from 'axios';
 import cheerio from 'cheerio';
 import logger from './logger';
-import { CPI_URL, CPI_NUM_ROWS, CPI_NUM_COLUMNS, GDP_URL } from './config';
+import {
+  CPI_URL,
+  CPI_NUM_ROWS,
+  CPI_NUM_COLUMNS,
+  GDP_URL,
+  GDP_OLD_STAGE,
+} from './config';
 import { Proxy } from './types';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 
@@ -77,8 +83,8 @@ export async function checkGDPValue(
     const $ = cheerio.load(html);
 
     const cellName = $('.bea-special').eq(0).find('td').eq(0).text();
-    if (cellName.trim().includes('(Adv)')) {
-      logger.error('Data not available yet.');
+    if (cellName.trim().includes(GDP_OLD_STAGE)) {
+      logger.error(`Data not available yet. Still in ${GDP_OLD_STAGE} stage.`);
       return null;
     }
 
