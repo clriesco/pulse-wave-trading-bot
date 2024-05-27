@@ -21,6 +21,7 @@ export async function checkCPIValue(
       const proxyUrl = `http://${proxy.username}:${proxy.password}@${proxy.proxy_address}:${proxy.port}`;
       const agent = new HttpsProxyAgent(proxyUrl);
 
+      logger.debug(`Checking CPI value using proxy ${proxy.proxy_address}.`);
       response = await axios.get<string>(CPI_URL, {
         httpAgent: agent,
         httpsAgent: agent,
@@ -39,6 +40,7 @@ export async function checkCPIValue(
       .eq(CPI_NUM_COLUMNS - 1)
       .text();
     const value = parseFloat(cellValue.trim());
+    logger.debug(`CPI value: ${value}`);
 
     return isNaN(value) ? null : value;
   } catch (error) {
@@ -63,6 +65,7 @@ export async function checkGDPValue(
       const proxyUrl = `http://${proxy.username}:${proxy.password}@${proxy.proxy_address}:${proxy.port}`;
       const agent = new HttpsProxyAgent(proxyUrl);
 
+      logger.debug(`Checking GDP value using proxy ${proxy.proxy_address}.`);
       response = await axios.get<string>(GDP_URL, {
         httpAgent: agent,
         httpsAgent: agent,
@@ -82,6 +85,7 @@ export async function checkGDPValue(
     const cellValue = $('.bea-special').eq(0).find('td').eq(1).text();
     const value = parseFloat(cellValue.replace('\n', '').trim());
 
+    logger.debug(`GDP value: ${value}`);
     return isNaN(value) ? null : value;
   } catch (error) {
     logger.error(`Error fetching or parsing GDP data: ${error}`);

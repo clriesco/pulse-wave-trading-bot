@@ -13,6 +13,7 @@ import { Proxy, ProxyAPIResponse } from './types';
  */
 export async function getProxies(): Promise<Proxy[]> {
   try {
+    logger.info('Fetching proxies from Webshare API...');
     const response = await axios.get<ProxyAPIResponse>(PROXY_API_URL, {
       headers: {
         Authorization: `Token ${WEBSHARE_API_KEY}`,
@@ -23,6 +24,7 @@ export async function getProxies(): Promise<Proxy[]> {
         page_size: 25,
       },
     });
+    logger.debug(`${response.data.count} proxies fetched.`);
 
     return response.data.results;
   } catch (error) {

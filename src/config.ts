@@ -31,8 +31,7 @@ export const GDP_VALUE_THRESHOLD =
   Number(process.env.GDP_VALUE_THRESHOLD) || 1.3; // Expected GDP value
 
 //Strategy
-export const ACTIVE_TRADING_STRATEGY =
-  process.env.ACTIVE_TRADING_STRATEGY || 'GDP'; // 'CPI' or 'GDP'
+export const ACTIVE_ALGORITHM = process.env.ACTIVE_ALGORITHM || 'GDP'; // 'CPI' or 'GDP'
 export const AMOUNT = Number(process.env.AMOUNT) || 100; // Amount to trade in USDT
 export const STOP_LOSS_PERCENTAGE =
   Number(process.env.STOP_LOSS_PERCENTAGE) || 0.003; // 0.3% stop loss
@@ -40,3 +39,6 @@ export const TAKE_PROFIT_PERCENTAGE =
   Number(process.env.TAKE_PROFIT_PERCENTAGE) || 0.01; // 1% take profit
 export const STRATEGY_PROXY_INDEX =
   Number(process.env.STRATEGY_PROXY_INDEX) || 0; // Index of the proxy to use for the trading strategy
+export const NO_RECURRENT_FETCH =
+  process.env.NO_RECURRENT_FETCH === 'true' || false; // If true, the algorithm will only check the value once
+export const NO_PROXY = process.env.NO_PROXY === 'true' || false; // If true, the algorithm will not use a proxy

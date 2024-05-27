@@ -56,23 +56,27 @@ const optionsHeaders: Record<string, string> = {
  * The main function that initializes the trading bot.
  * This function fetches the list of proxies and sets the user agent.
  *
- * @param {Proxy} proxy - The list of proxies to use for the bot.
+ * @param {Proxy | null} proxy - The proxy to use for the bot. If null, no proxy is used.
  * @returns {Promise<void>} A promise that resolves when the bot is initialized.
  */
-export async function init(proxy: Proxy) {
+export async function init(proxy: Proxy | null) {
   USER_AGENT = fakeUserAgent();
   headers['User-Agent'] = USER_AGENT;
   optionsHeaders['User-Agent'] = USER_AGENT;
-  //set random proxy
-  proxyConfig = {
-    protocol: 'http',
-    host: proxy.proxy_address,
-    port: proxy.port,
-    auth: {
-      username: proxy.username,
-      password: proxy.password,
-    },
-  };
+
+  if (proxy) {
+    proxyConfig = {
+      protocol: 'http',
+      host: proxy.proxy_address,
+      port: proxy.port,
+      auth: {
+        username: proxy.username,
+        password: proxy.password,
+      },
+    };
+  } else {
+    proxyConfig = false;
+  }
 }
 
 /**
