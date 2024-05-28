@@ -24,6 +24,7 @@ import {
   E1_QUANTFURY_TOKEN,
   L1_QUANTFURY_TOKEN,
   QUANTFURY_DEVICEID,
+  NO_TRADING,
 } from './config';
 import {
   PositionPayload,
@@ -114,6 +115,9 @@ async function openLimitPosition(
   stop: number | null = null,
   target: number | null = null
 ): Promise<QuantfuryResponse | APIError> {
+  if (NO_TRADING) {
+    return { error: 'Trading is disabled', code: 'error' };
+  }
   const priceId = uuidv4();
   const url = `https://e1.${BASE_URL}/limitOrder/create`;
 
@@ -279,6 +283,9 @@ async function openMarketPosition(
   targets: TargetOrder[] = [],
   stops: StopOrder[] = []
 ): Promise<QuantfuryResponse | APIError> {
+  if (NO_TRADING) {
+    return { error: 'Trading is disabled', code: 'error' };
+  }
   const priceResponse = await getCurrentPrice();
   if (!priceResponse) {
     return { error: 'Failed to fetch current price', code: 'error' };

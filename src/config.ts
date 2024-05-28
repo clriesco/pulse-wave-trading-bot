@@ -76,3 +76,4 @@ export const STRATEGY_PROXY_INDEX =
 export const NO_RECURRENT_FETCH =
   process.env.NO_RECURRENT_FETCH === 'true' || false; // If true, the algorithm will only check the value once
 export const NO_PROXY = process.env.NO_PROXY === 'true' || false; // If true, the algorithm will not use a proxy
+export const NO_TRADING = process.env.NO_TRADING === 'true' || false; // If true, the algorithm will not execute trades
