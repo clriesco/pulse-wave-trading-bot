@@ -57,6 +57,13 @@ export const PCE_VALUE_THRESHOLD =
   Number(process.env.PCE_VALUE_THRESHOLD) || 2.6; // Expected PCE value
 export const PCE_OLD_STAGE = process.env.PCE_OLD_STAGE || 'March 2024'; // Old stage of the PCE value announcement
 
+//NFP
+export const NFP_URL =
+  process.env.NFP_URL || 'https://www.bls.gov/news.release/empsit.nr0.htm'; // Non-Farm Payrolls
+export const NFP_VALUE_THRESHOLD =
+  Number(process.env.NFP_VALUE_THRESHOLD) || 175000; // Expected NFP value
+export const NFP_NEXT_STAGE = process.env.NFP_NEXT_STAGE || 'MAY 2024'; // Next stage of the NFP value announcement
+
 //Strategy
 export const ACTIVE_ALGORITHM = process.env.ACTIVE_ALGORITHM || 'GDP'; // 'CPI' or 'GDP'
 export const AMOUNT = Number(process.env.AMOUNT) || 100; // Amount to trade in USDT

@@ -28,9 +28,12 @@ import {
   GDP_OLD_STAGE,
   PCE_URL,
   PCE_OLD_STAGE,
+  NFP_URL,
+  NFP_NEXT_STAGE,
 } from './config';
 import { Proxy } from './types';
 import { HttpsProxyAgent } from 'https-proxy-agent';
+import fakeUserAgent from 'fake-useragent';
 
 /**
  * Fetches the CPI value from the specified URL using the given proxy.
@@ -43,6 +46,11 @@ export async function checkCPIValue(
 ): Promise<number | null> {
   try {
     let response;
+    const headers = {
+      'User-Agent': fakeUserAgent(),
+      Accept: 'text/html',
+      'Accept-Encoding': 'gzip, deflate, br',
+    };
     if (proxy !== null) {
       const proxyUrl = `http://${proxy.username}:${proxy.password}@${proxy.proxy_address}:${proxy.port}`;
       const agent = new HttpsProxyAgent(proxyUrl);
@@ -51,9 +59,10 @@ export async function checkCPIValue(
       response = await axios.get<string>(CPI_URL, {
         httpAgent: agent,
         httpsAgent: agent,
+        headers,
       });
     } else {
-      response = await axios.get<string>(CPI_URL);
+      response = await axios.get<string>(CPI_URL, { headers });
     }
     const html = response.data;
     const $ = cheerio.load(html);
@@ -167,6 +176,75 @@ export async function checkPCEValue(
     return isNaN(value) ? null : value;
   } catch (error) {
     logger.error(`Error fetching or parsing PCE data: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches the Nonfarm payroll employment value from the specified URL using the given proxy.
+ *
+ * @param {Proxy} proxy - The proxy configuration to use for the request.
+ * @returns {Promise<number | null>} A promise that resolves to the NFP price indexvalue or null if not found.
+ * @throws Will throw an error if the request fails.
+ */
+export async function checkNFPValue(
+  proxy: Proxy | null
+): Promise<number | null> {
+  try {
+    let response;
+    const headers = {
+      'User-Agent': fakeUserAgent(),
+      Accept: 'text/html',
+      'Accept-Encoding': 'gzip, deflate, br',
+    };
+    if (proxy !== null) {
+      const proxyUrl = `http://${proxy.username}:${proxy.password}@${proxy.proxy_address}:${proxy.port}`;
+      const agent = new HttpsProxyAgent(proxyUrl);
+
+      logger.debug(`Checking NFP value using proxy ${proxy.proxy_address}.`);
+      response = await axios.get<string>(NFP_URL, {
+        httpAgent: agent,
+        httpsAgent: agent,
+        headers,
+      });
+    } else {
+      response = await axios.get<string>(NFP_URL, { headers });
+    }
+    const html = response.data;
+    const $ = cheerio.load(html);
+
+    const nfpText = $('#bodytext .normalnews pre').text();
+
+    const nfpTextStart = nfpText.indexOf(
+      `THE EMPLOYMENT SITUATION -- ${NFP_NEXT_STAGE}`
+    );
+    const nfpTextEnd = nfpText.indexOf('and the unemployment rate');
+
+    if (
+      nfpTextStart === -1 ||
+      nfpTextEnd === -1 ||
+      nfpTextStart >= nfpTextEnd
+    ) {
+      logger.error('NFP data not found.');
+      return null;
+    }
+
+    const nfpData = nfpText.substring(nfpTextStart, nfpTextEnd);
+    const cellValue = nfpData.match(/\b\d{1,3}(,\d{3})*\b/);
+    if (!cellValue) {
+      logger.error('NFP data not found.');
+      return null;
+    }
+    let value = parseFloat(cellValue[0].replace(',', ''));
+    // If the words 'declined' or 'fell' is found, the value is negative
+    if (nfpData.includes('declined') || nfpData.includes('fell')) {
+      value = value * -1;
+    }
+
+    logger.debug(`NFP value: ${value}`);
+    return isNaN(value) ? null : value;
+  } catch (error) {
+    logger.error(`Error fetching or parsing NFP data: ${error}`);
     return null;
   }
 }
