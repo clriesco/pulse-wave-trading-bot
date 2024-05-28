@@ -28,6 +28,7 @@ import {
   CPI_VALUE_THRESHOLD,
   GDP_VALUE_THRESHOLD,
   PCE_VALUE_THRESHOLD,
+  NFP_VALUE_THRESHOLD,
   AMOUNT,
   CHECK_INTERVAL_SECONDS,
   STRATEGY_PROXY_INDEX,
@@ -237,6 +238,56 @@ export async function executePCETradingStrategy(
   } else {
     logger.info(
       `PCE Price Index value ${pceValue} is around the threshold. No action taken.`
+    );
+  }
+}
+
+/**
+ * Executes the trading strategy based on the Nonfarm payroll employment value.
+ *
+ * @param {number | null} nfpValue - The NFP Price Index value to base the trading strategy on. If null, no action is taken.
+ * @param {Proxy | null} proxy - The proxy to use for the trading strategy.
+ */
+export async function executeNFPTradingStrategy(
+  nfpValue: number | null,
+  proxy: Proxy | null
+) {
+  if (nfpValue === null) {
+    logger.error('No value found in the specified cell.');
+    return;
+  }
+
+  if (nfpValue < NFP_VALUE_THRESHOLD - 100000) {
+    logger.info(
+      `NFP Price Index value ${nfpValue} is below the threshold. Executing SHORT strategy.`
+    );
+
+    await initQuantfury(proxy);
+    const ret = await openMarketShortPosition(AMOUNT);
+    if ('data' in ret) {
+      logger.info(
+        `Successfully executed SHORT strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
+      );
+    } else {
+      logger.error('Error executing SHORT strategy:', ret.error);
+    }
+  } else if (nfpValue > NFP_VALUE_THRESHOLD + 100000) {
+    logger.info(
+      `NFP Price Index value ${nfpValue} is above the threshold. Executing LONG strategy.`
+    );
+
+    await initQuantfury(proxy);
+    const ret = await openMarketLongPosition(AMOUNT);
+    if ('data' in ret) {
+      logger.info(
+        `Successfully executed LONG strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
+      );
+    } else {
+      logger.error('Error executing LONG strategy:', ret.error);
+    }
+  } else {
+    logger.info(
+      `NFP Price Index value ${nfpValue} is around the threshold. No action taken.`
     );
   }
 }

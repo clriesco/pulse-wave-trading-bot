@@ -18,12 +18,18 @@
  *
  * ------------------------------------------------------------------------------*/
 import logger from './logger';
-import { checkCPIValue, checkGDPValue, checkPCEValue } from './scraper';
+import {
+  checkCPIValue,
+  checkGDPValue,
+  checkPCEValue,
+  checkNFPValue,
+} from './scraper';
 import {
   launchAlgorithm,
   executeCPITradingStrategy,
   executeGDPTradingStrategy,
   executePCETradingStrategy,
+  executeNFPTradingStrategy,
 } from './strategy';
 import { ACTIVE_ALGORITHM } from './config';
 
@@ -40,6 +46,10 @@ async function main() {
     case 'PCE':
       logger.info('Using PCE trading strategy.');
       await launchAlgorithm('PCE', checkPCEValue, executePCETradingStrategy);
+      break;
+    case 'NFP':
+      logger.info('Using NFP trading strategy.');
+      await launchAlgorithm('NFP', checkNFPValue, executeNFPTradingStrategy);
       break;
     default:
       logger.error('Invalid trading strategy:', ACTIVE_ALGORITHM);
