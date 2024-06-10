@@ -85,7 +85,7 @@ export interface QuantfuryResponse {
 }
 
 export interface PositionResponseData {
-  id: string;
+  id?: string;
   closedPositionPnlAccount: number;
   operationPrice: number;
   position: PositionData;
@@ -120,6 +120,15 @@ export interface PositionData {
   stopOrders: StopOrder[];
   targetOrders: TargetOrder[];
   tradingMode: number;
+}
+
+export interface ReducePositionData {
+  orderType: OrderType;
+  price: number;
+  tradingPositionId: string;
+  value: {
+    amountInstrument: number;
+  };
 }
 
 export interface APIResponse<T> {

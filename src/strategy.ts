@@ -21,19 +21,27 @@ import logger from './logger';
 import {
   openMarketLongPosition,
   openMarketShortPosition,
+  reducePosition,
   init as initQuantfury,
 } from './quantfury';
-import { Proxy } from './types';
+import { Proxy, PositionData, OrderType } from './types';
 import {
   CPI_VALUE_THRESHOLD,
   GDP_VALUE_THRESHOLD,
   PCE_VALUE_THRESHOLD,
   NFP_VALUE_THRESHOLD,
+  CPI_VALUE_OFFSET,
+  GDP_VALUE_OFFSET,
+  PCE_VALUE_OFFSET,
+  NFP_VALUE_OFFSET,
   AMOUNT,
+  MAX_AMOUNT,
   CHECK_INTERVAL_SECONDS,
   STRATEGY_PROXY_INDEX,
   NO_RECURRENT_FETCH,
   NO_PROXY,
+  STOP_LOSS_PERCENTAGE,
+  TAKE_PROFIT_PERCENTAGE,
 } from './config';
 import { getProxies } from './proxy';
 
@@ -41,12 +49,14 @@ type CheckValueFunction = (proxy: any) => Promise<number | null>;
 type ExecuteStrategyFunction = (value: number, proxy: any) => Promise<void>;
 
 /**
- * Launches the trading algorithm for the specified indicator.
+ * Launches the trading algorithm for the specified macroeconomic indicator.
  *
- * @param indicator - The indicator to base the trading strategy on.
- * @param checkValueFunction - The function to check the value of the indicator.
- * @param executeStrategyFunction - The function to execute the trading strategy.
- * @returns {Promise<void>} A promise that resolves when the algorithm is launched.
+ * @param {string} indicator - The macroeconomic indicator to base the trading strategy on (e.g., 'CPI', 'GDP', 'PCE', 'NFP').
+ * @param {CheckValueFunction} checkValueFunction - The function used to fetch the value of the indicator from a data source.
+ * @param {ExecuteStrategyFunction} executeStrategyFunction - The function used to execute the trading strategy based on the fetched indicator value.
+ * @returns {Promise<void>} A promise that resolves when the algorithm execution completes or is terminated.
+ *
+ * This function continuously fetches the value of the specified indicator at regular intervals using a proxy (if applicable) until a valid value is obtained. Once a valid value is found, the corresponding trading strategy is executed, and further fetching is stopped.
  */
 export async function launchAlgorithm(
   indicator: string,
@@ -93,201 +103,193 @@ export async function launchAlgorithm(
 }
 
 /**
- * Executes the trading strategy based on the CPI value.
+ * Adds Take Profit and Stop Loss orders to the specified trading position.
+ *
+ * @param {PositionData} position - The trading position to add the orders to.
+ * @returns {Promise<void>} A promise that resolves when the orders are successfully added to the position.
+ */
+export async function addTakeProfitStopLoss(position: PositionData) {
+  const { id, openPrice } = position;
+  const stopLossPrice = Math.floor(openPrice * (1 - STOP_LOSS_PERCENTAGE));
+  const takeProfitPrice = Math.floor(openPrice * (1 + TAKE_PROFIT_PERCENTAGE));
+
+  const tpResponse = await reducePosition(
+    id,
+    OrderType.TARGET,
+    takeProfitPrice,
+    position.amountInstrument
+  );
+
+  if ('error' in tpResponse) {
+    logger.error('Error adding Take Profit order:', tpResponse.error);
+  } else {
+    logger.info(`Take Profit order added at price ${takeProfitPrice}`);
+  }
+
+  const slResponse = await reducePosition(
+    id,
+    OrderType.STOP,
+    stopLossPrice,
+    position.amountInstrument
+  );
+
+  if ('error' in slResponse) {
+    logger.error('Error adding Stop Loss order:', slResponse.error);
+  } else {
+    logger.info(`Stop Loss order added at price ${stopLossPrice}`);
+  }
+}
+
+/**
+ * Executes a generic trading strategy based on the provided macroeconomic indicator value.
+ *
+ * @param {number | null} value - The value of the macroeconomic indicator to base the trading strategy on. If null, no action is taken.
+ * @param {Proxy | null} proxy - The proxy to use for the trading strategy. Null if no proxy is used.
+ * @param {boolean} direction - The direction of the indicator's influence on the trading strategy. True for a direct relation, false for an inverse relation.
+ * @param {number} threshold - The threshold value for the indicator, used to determine trading actions.
+ * @param {number} offset - The offset value used to calculate leverage based on the difference between the indicator value and the threshold.
+ * @returns {Promise<void>} A promise that resolves when the trading strategy is executed or if no action is taken.
+ *
+ * The leverage for the trading position is calculated as (value - threshold) / offset. The leverage determines the size of the position and its direction (long or short) based on the relation specified by `direction`. If leverage is between -1 and 1, no action is taken.
+ */
+export async function executeTradingStrategy(
+  value: number | null,
+  proxy: Proxy | null,
+  direction: boolean,
+  threshold: number,
+  offset: number
+) {
+  if (value === null) {
+    logger.error('No value found in the specified position.');
+    return;
+  }
+  let leverage = (value - threshold) / offset;
+  leverage = Math.sign(leverage) * Math.floor(Math.abs(leverage));
+
+  const max_leverage = Math.floor(MAX_AMOUNT / AMOUNT);
+
+  if (leverage > max_leverage) leverage = max_leverage;
+  if (-max_leverage > leverage) leverage = -max_leverage;
+
+  if (!direction) leverage = -leverage;
+
+  if (leverage > -1 && leverage < 1) {
+    logger.info(`Value ${value} is around the threshold. No action taken.`);
+    return;
+  }
+
+  await initQuantfury(proxy);
+
+  let directionFunction = openMarketLongPosition;
+  if (leverage <= -1) {
+    logger.info(
+      `Value ${value} is below the threshold. Executing SHORT strategy.`
+    );
+    directionFunction = openMarketShortPosition;
+  } else {
+    logger.info(
+      `Value ${value} is above the threshold. Executing LONG strategy.`
+    );
+  }
+
+  const ret = await directionFunction(AMOUNT * Math.abs(leverage));
+
+  if ('data' in ret) {
+    logger.info(ret.data);
+    console.log(ret.data);
+    logger.info(
+      `Successfully executed strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
+    );
+    await addTakeProfitStopLoss(ret.data.position);
+  } else {
+    logger.error('Error executing strategy:', ret.error);
+  }
+}
+
+/**
+ * Executes the trading strategy based on the CPI (Consumer Price Index) value.
  *
  * @param {number | null} cpiValue - The CPI value to base the trading strategy on. If null, no action is taken.
- * @param {Proxy | null} proxy - The proxy to use for the trading strategy.
+ * @param {Proxy | null} proxy - The proxy to use for the trading strategy. Null if no proxy is used.
+ * @returns {Promise<void>} A promise that resolves when the trading strategy is executed.
+ *
+ * The CPI value has an inverse relation with the trading strategy: if the CPI value is higher than the threshold, a short position is taken; if lower, a long position is taken. The leverage is calculated based on the difference between the CPI value and the threshold, divided by the offset.
  */
 export async function executeCPITradingStrategy(
   cpiValue: number | null,
   proxy: Proxy | null
 ) {
-  if (cpiValue === null) {
-    logger.error('No value found in the specified cell.');
-    return;
-  }
-
-  if (cpiValue > CPI_VALUE_THRESHOLD + 0.1) {
-    logger.info(
-      `CPI value ${cpiValue} is above the threshold. Executing SHORT strategy.`
-    );
-
-    await initQuantfury(proxy);
-    const ret = await openMarketShortPosition(AMOUNT);
-    if ('data' in ret) {
-      logger.info(
-        `Successfully executed SHORT strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
-      );
-    } else {
-      logger.error('Error executing SHORT strategy:', ret.error);
-    }
-  } else if (cpiValue < CPI_VALUE_THRESHOLD - 0.1) {
-    logger.info(
-      `CPI value ${cpiValue} is below the threshold. Executing LONG strategy.`
-    );
-
-    await initQuantfury(proxy);
-    const ret = await openMarketLongPosition(AMOUNT);
-    if ('data' in ret) {
-      logger.info(
-        `Successfully executed LONG strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
-      );
-    } else {
-      logger.error('Error executing LONG strategy:', ret.error);
-    }
-  } else {
-    logger.info(
-      `CPI value ${cpiValue} is around the threshold. No action taken.`
-    );
-  }
+  return await executeTradingStrategy(
+    cpiValue,
+    proxy,
+    false,
+    CPI_VALUE_THRESHOLD,
+    CPI_VALUE_OFFSET
+  );
 }
 
 /**
- * Executes the trading strategy based on the GDP value.
+ * Executes the trading strategy based on the GDP (Gross Domestic Product) value.
  *
  * @param {number | null} gdpValue - The GDP value to base the trading strategy on. If null, no action is taken.
- * @param {Proxy | null} proxy - The proxy to use for the trading strategy.
+ * @param {Proxy | null} proxy - The proxy to use for the trading strategy. Null if no proxy is used.
+ * @returns {Promise<void>} A promise that resolves when the trading strategy is executed.
+ *
+ * The GDP value has an inverse relation with the trading strategy: if the GDP value is higher than the threshold, a short position is taken; if lower, a long position is taken. The leverage is calculated based on the difference between the GDP value and the threshold, divided by the offset.
  */
 export async function executeGDPTradingStrategy(
   gdpValue: number | null,
   proxy: Proxy | null
 ) {
-  if (gdpValue === null) {
-    logger.error('No value found in the specified cell.');
-    return;
-  }
-
-  if (gdpValue < GDP_VALUE_THRESHOLD - 0.2) {
-    logger.info(
-      `GDP value ${gdpValue} is below the threshold. Executing SHORT strategy.`
-    );
-
-    await initQuantfury(proxy);
-    const ret = await openMarketShortPosition(AMOUNT);
-    if ('data' in ret) {
-      logger.info(
-        `Successfully executed SHORT strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
-      );
-    } else {
-      logger.error('Error executing SHORT strategy:', ret.error);
-    }
-  } else if (gdpValue > GDP_VALUE_THRESHOLD + 0.2) {
-    logger.info(
-      `GDP value ${gdpValue} is above the threshold. Executing LONG strategy.`
-    );
-
-    await initQuantfury(proxy);
-    const ret = await openMarketLongPosition(AMOUNT);
-    if ('data' in ret) {
-      logger.info(
-        `Successfully executed LONG strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
-      );
-    } else {
-      logger.error('Error executing LONG strategy:', ret.error);
-    }
-  } else {
-    logger.info(
-      `GDP value ${gdpValue} is around the threshold. No action taken.`
-    );
-  }
+  return await executeTradingStrategy(
+    gdpValue,
+    proxy,
+    false,
+    GDP_VALUE_THRESHOLD,
+    GDP_VALUE_OFFSET
+  );
 }
 
 /**
- * Executes the trading strategy based on the PCE Price Index value.
+ * Executes the trading strategy based on the PCE (Personal Consumption Expenditures Price Index) value.
  *
- * @param {number | null} pceValue - The PCE Price Index value to base the trading strategy on. If null, no action is taken.
- * @param {Proxy | null} proxy - The proxy to use for the trading strategy.
+ * @param {number | null} pceValue - The PCE value to base the trading strategy on. If null, no action is taken.
+ * @param {Proxy | null} proxy - The proxy to use for the trading strategy. Null if no proxy is used.
+ * @returns {Promise<void>} A promise that resolves when the trading strategy is executed.
+ *
+ * The PCE value has an inverse relation with the trading strategy: if the PCE value is higher than the threshold, a short position is taken; if lower, a long position is taken. The leverage is calculated based on the difference between the PCE value and the threshold, divided by the offset.
  */
 export async function executePCETradingStrategy(
   pceValue: number | null,
   proxy: Proxy | null
 ) {
-  if (pceValue === null) {
-    logger.error('No value found in the specified cell.');
-    return;
-  }
-
-  if (pceValue > PCE_VALUE_THRESHOLD + 0.2) {
-    logger.info(
-      `PCE Price Index value ${pceValue} is above the threshold. Executing SHORT strategy.`
-    );
-
-    await initQuantfury(proxy);
-    const ret = await openMarketShortPosition(AMOUNT);
-    if ('data' in ret) {
-      logger.info(
-        `Successfully executed SHORT strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
-      );
-    } else {
-      logger.error('Error executing SHORT strategy:', ret.error);
-    }
-  } else if (pceValue < PCE_VALUE_THRESHOLD - 0.2) {
-    logger.info(
-      `PCE Price Index value ${pceValue} is below the threshold. Executing LONG strategy.`
-    );
-
-    await initQuantfury(proxy);
-    const ret = await openMarketLongPosition(AMOUNT);
-    if ('data' in ret) {
-      logger.info(
-        `Successfully executed LONG strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
-      );
-    } else {
-      logger.error('Error executing LONG strategy:', ret.error);
-    }
-  } else {
-    logger.info(
-      `PCE Price Index value ${pceValue} is around the threshold. No action taken.`
-    );
-  }
+  return await executeTradingStrategy(
+    pceValue,
+    proxy,
+    false,
+    PCE_VALUE_THRESHOLD,
+    PCE_VALUE_OFFSET
+  );
 }
 
 /**
- * Executes the trading strategy based on the Nonfarm payroll employment value.
+ * Executes the trading strategy based on the Non-Farm Payroll (NFP) value.
  *
- * @param {number | null} nfpValue - The NFP Price Index value to base the trading strategy on. If null, no action is taken.
- * @param {Proxy | null} proxy - The proxy to use for the trading strategy.
+ * @param {number | null} nfpValue - The NFP value to base the trading strategy on. If null, no action is taken.
+ * @param {Proxy | null} proxy - The proxy to use for the trading strategy. Null if no proxy is used.
+ * @returns {Promise<void>} A promise that resolves when the trading strategy is executed.
+ *
+ * The NFP value has an inverse relation with the trading strategy: if the NFP value is higher than the threshold, a short position is taken; if lower, a long position is taken. The leverage is calculated based on the difference between the NFP value and the threshold, divided by the offset.
  */
 export async function executeNFPTradingStrategy(
   nfpValue: number | null,
   proxy: Proxy | null
 ) {
-  if (nfpValue === null) {
-    logger.error('No value found in the specified cell.');
-    return;
-  }
-
-  if (nfpValue < NFP_VALUE_THRESHOLD - 100000) {
-    logger.info(
-      `NFP Price Index value ${nfpValue} is below the threshold. Executing SHORT strategy.`
-    );
-
-    await initQuantfury(proxy);
-    const ret = await openMarketShortPosition(AMOUNT);
-    if ('data' in ret) {
-      logger.info(
-        `Successfully executed SHORT strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
-      );
-    } else {
-      logger.error('Error executing SHORT strategy:', ret.error);
-    }
-  } else if (nfpValue > NFP_VALUE_THRESHOLD + 100000) {
-    logger.info(
-      `NFP Price Index value ${nfpValue} is above the threshold. Executing LONG strategy.`
-    );
-
-    await initQuantfury(proxy);
-    const ret = await openMarketLongPosition(AMOUNT);
-    if ('data' in ret) {
-      logger.info(
-        `Successfully executed LONG strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
-      );
-    } else {
-      logger.error('Error executing LONG strategy:', ret.error);
-    }
-  } else {
-    logger.info(
-      `NFP Price Index value ${nfpValue} is around the threshold. No action taken.`
-    );
-  }
+  return await executeTradingStrategy(
+    nfpValue,
+    proxy,
+    false,
+    NFP_VALUE_THRESHOLD,
+    NFP_VALUE_OFFSET
+  );
 }

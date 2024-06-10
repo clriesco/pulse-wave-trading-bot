@@ -39,6 +39,7 @@ export const CHECK_INTERVAL_SECONDS =
   Number(process.env.CHECK_INTERVAL_SECONDS) || 1;
 export const CPI_VALUE_THRESHOLD =
   Number(process.env.CPI_VALUE_THRESHOLD) || 0.5; // Expected CPI value
+export const CPI_VALUE_OFFSET = Number(process.env.CPI_VALUE_OFFSET) || 0.1; // Offset to get the CPI value
 export const CPI_NUM_ROWS = Number(process.env.CPI_NUM_ROWS) || 12; //Row nr 12, corresponding to 2024
 export const CPI_NUM_COLUMNS = Number(process.env.CPI_NUM_COLUMNS) || 4; //Column nr 4, corresponding to CPI April 2024, announced in May 2024
 
@@ -47,6 +48,7 @@ export const GDP_URL =
   process.env.GDP_URL || 'https://www.bea.gov/data/gdp/gross-domestic-product';
 export const GDP_VALUE_THRESHOLD =
   Number(process.env.GDP_VALUE_THRESHOLD) || 1.3; // Expected GDP value
+export const GDP_VALUE_OFFSET = Number(process.env.GDP_VALUE_OFFSET) || 0.3; // Offset to get the GDP value
 export const GDP_OLD_STAGE = process.env.GDP_OLD_STAGE || '(Adv)'; // Old stage of the GDP value announcement
 
 //PCE
@@ -55,6 +57,7 @@ export const PCE_URL =
   'https://www.bea.gov/data/personal-consumption-expenditures-price-index'; // Personal Consumption Expenditures
 export const PCE_VALUE_THRESHOLD =
   Number(process.env.PCE_VALUE_THRESHOLD) || 2.6; // Expected PCE value
+export const PCE_VALUE_OFFSET = Number(process.env.PCE_VALUE_OFFSET) || 0.2; // Offset to get the PCE value
 export const PCE_OLD_STAGE = process.env.PCE_OLD_STAGE || 'March 2024'; // Old stage of the PCE value announcement
 
 //NFP
@@ -62,11 +65,13 @@ export const NFP_URL =
   process.env.NFP_URL || 'https://www.bls.gov/news.release/empsit.nr0.htm'; // Non-Farm Payrolls
 export const NFP_VALUE_THRESHOLD =
   Number(process.env.NFP_VALUE_THRESHOLD) || 175000; // Expected NFP value
+export const NFP_VALUE_OFFSET = Number(process.env.NFP_VALUE_OFFSET) || 10000; // Offset to get the NFP value
 export const NFP_NEXT_STAGE = process.env.NFP_NEXT_STAGE || 'MAY 2024'; // Next stage of the NFP value announcement
 
 //Strategy
 export const ACTIVE_ALGORITHM = process.env.ACTIVE_ALGORITHM || 'GDP'; // 'CPI' or 'GDP'
 export const AMOUNT = Number(process.env.AMOUNT) || 100; // Amount to trade in USDT
+export const MAX_AMOUNT = Number(process.env.MAX_AMOUNT) || 1000; // Maximum amount to trade in USDT
 export const STOP_LOSS_PERCENTAGE =
   Number(process.env.STOP_LOSS_PERCENTAGE) || 0.003; // 0.3% stop loss
 export const TAKE_PROFIT_PERCENTAGE =

@@ -38,6 +38,7 @@ import {
   PositionResponseData,
   Proxy,
   AxiosProxyConfig,
+  ReducePositionData,
   type OrderType,
 } from './types';
 import { isAxiosError } from './utils';
@@ -408,7 +409,7 @@ export async function reducePosition(
   amount: number
 ): Promise<QuantfuryResponse | APIError> {
   const url = `https://e1.${BASE_URL}/reduceOrders/create`;
-  const payload = {
+  const payload: ReducePositionData = {
     orderType,
     price,
     tradingPositionId: id,

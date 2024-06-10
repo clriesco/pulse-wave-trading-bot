@@ -96,6 +96,14 @@ export async function checkGDPValue(
 ): Promise<number | null> {
   try {
     let response;
+    const headers = {
+      //'User-Agent': fakeUserAgent(),
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      Accept:
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'Accept-Encoding': 'gzip, deflate, br',
+    };
     if (proxy !== null) {
       const proxyUrl = `http://${proxy.username}:${proxy.password}@${proxy.proxy_address}:${proxy.port}`;
       const agent = new HttpsProxyAgent(proxyUrl);
@@ -104,9 +112,10 @@ export async function checkGDPValue(
       response = await axios.get<string>(GDP_URL, {
         httpAgent: agent,
         httpsAgent: agent,
+        headers,
       });
     } else {
-      response = await axios.get<string>(GDP_URL);
+      response = await axios.get<string>(GDP_URL, { headers });
     }
     const html = response.data;
     const $ = cheerio.load(html);
@@ -193,8 +202,11 @@ export async function checkNFPValue(
   try {
     let response;
     const headers = {
-      'User-Agent': fakeUserAgent(),
-      Accept: 'text/html',
+      //'User-Agent': fakeUserAgent(),
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      Accept:
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
       'Accept-Encoding': 'gzip, deflate, br',
     };
     if (proxy !== null) {
