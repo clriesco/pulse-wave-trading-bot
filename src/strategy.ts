@@ -75,7 +75,6 @@ export async function launchAlgorithm(
 
   const intervalId = setInterval(async () => {
     if (strategy_executed) {
-      clearInterval(intervalId);
       return;
     }
     NO_RECURRENT_FETCH && clearInterval(intervalId);
@@ -83,7 +82,7 @@ export async function launchAlgorithm(
     proxyIndex = (proxyIndex + 1) % proxies.length;
 
     const value = await checkValueFunction(proxy);
-    if (value !== null) {
+    if (value !== null && !strategy_executed) {
       logger.info(`Valid ${indicator} value found: ${value}`);
       strategy_executed = true;
       clearInterval(intervalId);
