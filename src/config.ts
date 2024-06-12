@@ -68,6 +68,14 @@ export const NFP_VALUE_THRESHOLD =
 export const NFP_VALUE_OFFSET = Number(process.env.NFP_VALUE_OFFSET) || 10000; // Offset to get the NFP value
 export const NFP_NEXT_STAGE = process.env.NFP_NEXT_STAGE || 'MAY 2024'; // Next stage of the NFP value announcement
 
+//FOMC
+export const FOMC_URL =
+  process.env.FOMC_URL ||
+  'https://www.federalreserve.gov/newsevents/pressreleases/monetary20240613a1.htm'; // Federal Open Market Committee
+export const FOMC_VALUE_THRESHOLD =
+  Number(process.env.FOMC_VALUE_THRESHOLD) || 5.4; // Expected FOMC value
+export const FOMC_VALUE_OFFSET = Number(process.env.FOMC_VALUE_OFFSET) || 0.1; // Offset to get the FOMC value
+
 //Strategy
 export const ACTIVE_ALGORITHM = process.env.ACTIVE_ALGORITHM || 'GDP'; // 'CPI' or 'GDP'
 export const AMOUNT = Number(process.env.AMOUNT) || 100; // Amount to trade in USDT

@@ -30,6 +30,7 @@ import {
   PCE_OLD_STAGE,
   NFP_URL,
   NFP_NEXT_STAGE,
+  FOMC_URL,
 } from './config';
 import { Proxy } from './types';
 import { HttpsProxyAgent } from 'https-proxy-agent';
@@ -257,6 +258,74 @@ export async function checkNFPValue(
     return isNaN(value) ? null : value;
   } catch (error) {
     logger.error(`Error fetching or parsing NFP data: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches the FOMC value from the specified URL using the given proxy.
+ * The FOMC value is the Federal Open Market Committee interest rate.
+ *
+ * @param {Proxy} proxy - The proxy configuration to use for the request.
+ * @returns {Promise<number | null>} A promise that resolves to the FOMC value or null if not found.
+ * @throws Will throw an error if the request fails.
+ */
+export async function checkFOMCValue(
+  proxy: Proxy | null
+): Promise<number | null> {
+  try {
+    let response;
+    const headers = {
+      //'User-Agent': fakeUserAgent(),
+      'User-Agent':
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      Accept:
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+      'Accept-Encoding': 'gzip, deflate, br',
+    };
+    if (proxy !== null) {
+      const proxyUrl = `http://${proxy.username}:${proxy.password}@${proxy.proxy_address}:${proxy.port}`;
+      const agent = new HttpsProxyAgent(proxyUrl);
+
+      logger.debug(`Checking FOMC value using proxy ${proxy.proxy_address}.`);
+      response = await axios.get<string>(FOMC_URL, {
+        httpAgent: agent,
+        httpsAgent: agent,
+        headers,
+      });
+    } else {
+      response = await axios.get<string>(FOMC_URL, { headers });
+    }
+    const html = response.data;
+    const $ = cheerio.load(html);
+
+    const fomcText = $('#content ul li:nth-child(1)').text();
+
+    const fomcTextStart = fomcText.indexOf(
+      `The Board of Governors of the Federal Reserve System voted unanimously`
+    );
+    const fomcTextEnd = fomcText.indexOf('percent, effective');
+
+    if (
+      fomcTextStart === -1 ||
+      fomcTextEnd === -1 ||
+      fomcTextStart >= fomcTextEnd
+    ) {
+      logger.error('FOMC data not found.');
+      return null;
+    }
+
+    const fomcData = fomcText.substring(fomcTextStart, fomcTextEnd);
+    const cellValue = fomcData.match(/\b\d{1}(.\d{1})*\b/);
+    if (!cellValue) {
+      logger.error('FOMC data not found.');
+      return null;
+    }
+    const value = parseFloat(cellValue[0]);
+    logger.debug(`FOMC value: ${value}`);
+    return isNaN(value) ? null : value;
+  } catch (error) {
+    logger.error(`Error fetching or parsing FOMC data: ${error}`);
     return null;
   }
 }

@@ -23,6 +23,7 @@ import {
   checkGDPValue,
   checkPCEValue,
   checkNFPValue,
+  checkFOMCValue,
 } from './scraper';
 import {
   launchAlgorithm,
@@ -30,6 +31,7 @@ import {
   executeGDPTradingStrategy,
   executePCETradingStrategy,
   executeNFPTradingStrategy,
+  executeFOMCTradingStrategy,
 } from './strategy';
 import { ACTIVE_ALGORITHM } from './config';
 
@@ -50,6 +52,10 @@ async function main() {
     case 'NFP':
       logger.info('Using NFP trading strategy.');
       await launchAlgorithm('NFP', checkNFPValue, executeNFPTradingStrategy);
+      break;
+    case 'FOMC':
+      logger.info('Using FOMC trading strategy.');
+      await launchAlgorithm('FOMC', checkFOMCValue, executeFOMCTradingStrategy);
       break;
     default:
       logger.error('Invalid trading strategy:', ACTIVE_ALGORITHM);

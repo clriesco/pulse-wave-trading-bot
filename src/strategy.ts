@@ -30,10 +30,12 @@ import {
   GDP_VALUE_THRESHOLD,
   PCE_VALUE_THRESHOLD,
   NFP_VALUE_THRESHOLD,
+  FOMC_VALUE_THRESHOLD,
   CPI_VALUE_OFFSET,
   GDP_VALUE_OFFSET,
   PCE_VALUE_OFFSET,
   NFP_VALUE_OFFSET,
+  FOMC_VALUE_OFFSET,
   AMOUNT,
   MAX_AMOUNT,
   CHECK_INTERVAL_SECONDS,
@@ -149,7 +151,8 @@ export async function addTakeProfitStopLoss(position: PositionData) {
  * @param {number} offset - The offset value used to calculate leverage based on the difference between the indicator value and the threshold.
  * @returns {Promise<void>} A promise that resolves when the trading strategy is executed or if no action is taken.
  *
- * The leverage for the trading position is calculated as (value - threshold) / offset. The leverage determines the size of the position and its direction (long or short) based on the relation specified by `direction`. If leverage is between -1 and 1, no action is taken.
+ * The leverage for the trading position is calculated as (value - threshold) / offset. The leverage determines the size of the position and its direction
+ * (long or short) based on the relation specified by `direction`. If leverage is between -1 and 1, no action is taken.
  */
 export async function executeTradingStrategy(
   value: number | null,
@@ -182,12 +185,12 @@ export async function executeTradingStrategy(
   let directionFunction = openMarketLongPosition;
   if (leverage <= -1) {
     logger.info(
-      `Value ${value} is below the threshold. Executing SHORT strategy.`
+      `Value ${value} is above the threshold. Executing SHORT strategy.`
     );
     directionFunction = openMarketShortPosition;
   } else {
     logger.info(
-      `Value ${value} is above the threshold. Executing LONG strategy.`
+      `Value ${value} is below the threshold. Executing LONG strategy.`
     );
   }
 
@@ -212,7 +215,9 @@ export async function executeTradingStrategy(
  * @param {Proxy | null} proxy - The proxy to use for the trading strategy. Null if no proxy is used.
  * @returns {Promise<void>} A promise that resolves when the trading strategy is executed.
  *
- * The CPI value has an inverse relation with the trading strategy: if the CPI value is higher than the threshold, a short position is taken; if lower, a long position is taken. The leverage is calculated based on the difference between the CPI value and the threshold, divided by the offset.
+ * The CPI value has an inverse relation with the trading strategy: if the CPI value is higher than the threshold,
+ * a short position is taken; if lower, a long position is taken. The leverage is calculated based on the difference
+ * between the CPI value and the threshold, divided by the offset.
  */
 export async function executeCPITradingStrategy(
   cpiValue: number | null,
@@ -234,7 +239,9 @@ export async function executeCPITradingStrategy(
  * @param {Proxy | null} proxy - The proxy to use for the trading strategy. Null if no proxy is used.
  * @returns {Promise<void>} A promise that resolves when the trading strategy is executed.
  *
- * The GDP value has an inverse relation with the trading strategy: if the GDP value is higher than the threshold, a short position is taken; if lower, a long position is taken. The leverage is calculated based on the difference between the GDP value and the threshold, divided by the offset.
+ * The GDP value has an inverse relation with the trading strategy: if the GDP value is higher than the threshold,
+ * a short position is taken; if lower, a long position is taken. The leverage is calculated based on the difference
+ * between the GDP value and the threshold, divided by the offset.
  */
 export async function executeGDPTradingStrategy(
   gdpValue: number | null,
@@ -256,7 +263,9 @@ export async function executeGDPTradingStrategy(
  * @param {Proxy | null} proxy - The proxy to use for the trading strategy. Null if no proxy is used.
  * @returns {Promise<void>} A promise that resolves when the trading strategy is executed.
  *
- * The PCE value has an inverse relation with the trading strategy: if the PCE value is higher than the threshold, a short position is taken; if lower, a long position is taken. The leverage is calculated based on the difference between the PCE value and the threshold, divided by the offset.
+ * The PCE value has an inverse relation with the trading strategy: if the PCE value is higher than the threshold,
+ * a short position is taken; if lower, a long position is taken. The leverage is calculated based on the difference
+ * between the PCE value and the threshold, divided by the offset.
  */
 export async function executePCETradingStrategy(
   pceValue: number | null,
@@ -278,7 +287,9 @@ export async function executePCETradingStrategy(
  * @param {Proxy | null} proxy - The proxy to use for the trading strategy. Null if no proxy is used.
  * @returns {Promise<void>} A promise that resolves when the trading strategy is executed.
  *
- * The NFP value has an inverse relation with the trading strategy: if the NFP value is higher than the threshold, a short position is taken; if lower, a long position is taken. The leverage is calculated based on the difference between the NFP value and the threshold, divided by the offset.
+ * The NFP value has an inverse relation with the trading strategy: if the NFP value is higher than the threshold,
+ * a short position is taken; if lower, a long position is taken. The leverage is calculated based on the difference
+ * between the NFP value and the threshold, divided by the offset.
  */
 export async function executeNFPTradingStrategy(
   nfpValue: number | null,
@@ -290,5 +301,29 @@ export async function executeNFPTradingStrategy(
     false,
     NFP_VALUE_THRESHOLD,
     NFP_VALUE_OFFSET
+  );
+}
+
+/**
+ * Executes the trading strategy based on the FOMC (Federal Open Market Committee) value.
+ *
+ * @param {number | null} fomcValue - The FOMC value to base the trading strategy on. If null, no action is taken.
+ * @param {Proxy | null} proxy - The proxy to use for the trading strategy. Null if no proxy is used.
+ * @returns {Promise<void>} A promise that resolves when the trading strategy is executed.
+ *
+ * The FOMC value has an inverse relation with the trading strategy: if the FOMC value is higher than the threshold,
+ * a long short is taken; if lower, a long position is taken. The leverage is calculated based on the difference between
+ * the FOMC value and the threshold, divided by the offset.
+ */
+export async function executeFOMCTradingStrategy(
+  fomcValue: number | null,
+  proxy: Proxy | null
+) {
+  return await executeTradingStrategy(
+    fomcValue,
+    proxy,
+    false,
+    FOMC_VALUE_THRESHOLD,
+    FOMC_VALUE_OFFSET
   );
 }
