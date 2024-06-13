@@ -152,3 +152,42 @@ export interface AxiosConfig {
   httpAgent?: any;
   httpsAgent?: any;
 }
+
+export interface Event {
+  eventId: string;
+  dateUtc: string;
+  actual: number | null;
+  revised: number | null;
+  consensus: number;
+  previous: number;
+  ratioDeviation: number | null;
+  name: string;
+  unit: string;
+}
+
+export interface PriceData {
+  timestamp: Date;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface Result {
+  event: string;
+  date: Date;
+  action: string;
+  entryPrice: number;
+  exitPrice: number;
+  profitOrLoss: number;
+  amountBTC: number;
+}
+
+export interface GapDetail {
+  previousTimestamp: string;
+  currentTimestamp: string;
+  previousTimestampOriginal: number;
+  currentTimestampOriginal: number;
+  gapInSeconds: number;
+}

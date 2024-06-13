@@ -17,7 +17,7 @@
  *   limitations under the License.
  *
  * ------------------------------------------------------------------------------*/
-import logger from './logger';
+import logger from './utils/logger';
 import {
   openMarketLongPosition,
   openMarketShortPosition,
@@ -45,7 +45,7 @@ import {
   STOP_LOSS_PERCENTAGE,
   TAKE_PROFIT_PERCENTAGE,
 } from './config';
-import { getProxies } from './proxy';
+import { getProxies } from './utils/proxy';
 
 type CheckValueFunction = (proxy: any) => Promise<number | null>;
 type ExecuteStrategyFunction = (value: number, proxy: any) => Promise<void>;

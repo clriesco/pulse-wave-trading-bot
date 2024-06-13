@@ -41,7 +41,7 @@ import {
   ReducePositionData,
   type OrderType,
 } from './types';
-import { isAxiosError } from './utils';
+import { isAxiosError } from './utils/utils';
 
 const BASE_URL = 'trdngbcknd.com/v11';
 let USER_AGENT: string = '';

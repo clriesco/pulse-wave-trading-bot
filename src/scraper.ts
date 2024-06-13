@@ -19,7 +19,7 @@
  * ------------------------------------------------------------------------------*/
 import axios from 'axios';
 import cheerio from 'cheerio';
-import logger from './logger';
+import logger from './utils/logger';
 import {
   CPI_URL,
   CPI_NUM_ROWS,

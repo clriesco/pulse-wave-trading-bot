@@ -19,8 +19,8 @@
  * ------------------------------------------------------------------------------*/
 import axios from 'axios';
 import logger from './logger';
-import { PROXY_API_URL, WEBSHARE_API_KEY } from './config';
-import { Proxy, ProxyAPIResponse } from './types';
+import { PROXY_API_URL, WEBSHARE_API_KEY } from '../config';
+import { Proxy, ProxyAPIResponse } from '../types';
 
 /**
  * Fetches the list of proxies from the Webshare API.

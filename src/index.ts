@@ -17,7 +17,7 @@
  *   limitations under the License.
  *
  * ------------------------------------------------------------------------------*/
-import logger from './logger';
+import logger from './utils/logger';
 import {
   checkCPIValue,
   checkGDPValue,
