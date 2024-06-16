@@ -142,7 +142,10 @@ async function executeTradingOperation(operationType: 'short' | 'long') {
  */
 export async function handlePrice(req: Request, res: Response) {
   if (operationCompleted) {
-    return res.status(200);
+    return res.status(200).send({
+      status: 'no_action',
+      message: 'Operation already completed',
+    });
   }
 
   try {
@@ -150,12 +153,19 @@ export async function handlePrice(req: Request, res: Response) {
 
     if (!isValidPrice(currentPrice!)) {
       logger.error('Invalid price object');
-      return res.status(400).send('Invalid price object');
+      return res.status(400).send({
+        status: 'error',
+        message: 'Invalid price object',
+        error: 'Price validation failed',
+      });
     }
 
     if (lastOperation) {
       logger.info('No action during an open position');
-      return res.status(200).send('No action during an open position');
+      return res.status(200).send({
+        status: 'no_action',
+        message: 'No action during an open position',
+      });
     }
 
     if (lastPrice) {
@@ -167,17 +177,32 @@ export async function handlePrice(req: Request, res: Response) {
           `Price difference: ${priceDifference} - Triggering ${operationType} operation...`
         );
         await executeTradingOperation(operationType);
+        const responseMessage = {
+          status: 'success',
+          message: 'Operation triggered',
+          data: {
+            operationType,
+            priceIni: lastPrice!.price,
+            priceEnd: currentPrice!.price,
+          },
+        };
         lastPrice = currentPrice; // Update lastPrice after processing the operation
-        return res.status(200).send('Price received and processed');
+        return res.status(200).send(responseMessage);
       }
     }
 
     // Update lastPrice if no operation is triggered
     lastPrice = currentPrice;
-
-    return res.status(200).send('Price received and processed');
+    return res.status(200).send({
+      status: 'no_action',
+      message: 'No operation triggered',
+    });
   } catch (error) {
     logger.error(`Error handling price: ${error}`);
-    return res.status(500).send('Internal server error');
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error handling price',
+      error: `${error}`,
+    });
   }
 }
