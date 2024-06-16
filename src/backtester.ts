@@ -18,10 +18,10 @@
  *
  * ------------------------------------------------------------------------------*/
 import * as fs from 'fs';
-import csvParser from 'csv-parser';
-import { promisify } from 'util';
 import { Event, PriceData, Result } from './types';
 import logger from './utils/logger';
+import csvParser from 'csv-parser';
+import { binarySearchCSV, readFromFile, readCSVHeader } from './utils/utils';
 
 const STOP_LOSS_PERCENTAGE = 0.002; // 0.2%
 const TAKE_PROFIT_PERCENTAGE = 0.02; // 2%
@@ -33,100 +33,6 @@ const MAX_AMOUNT = 1000000;
 const OFFSET_NFP = 15000;
 const OFFSET_CPI = 0.02;
 const OFFSET_FOMC = 0.02;
-
-const readFileAsync = promisify(fs.readFile);
-const statAsync = promisify(fs.stat);
-const readAsync = promisify(fs.read);
-
-/**
- * Reads events from a JSON file.
- *
- * @param {string} filePath - The path to the file to read.
- * @returns {Promise<Event[]>}
- */
-async function readEvents(filePath: string): Promise<Event[]> {
-  logger.info(`Reading events from file: ${filePath}`);
-  const data = await readFileAsync(filePath, 'utf-8');
-  return JSON.parse(data) as Event[];
-}
-/**
- * Searches for the position of the price closest to the target time in a CSV file.
- * The function uses a binary search algorithm to find the position.
- * The function reads chunks of the file to reduce the number of disk reads.
- * The function returns the position (in bytes) of the price closest to the target time.
- * If the target time is before the first price data point, the function returns 0.
- * The function assumes that the CSV file is sorted by timestamp in ascending order.
- * The function assumes that the CSV file has the following format:
- * timestamp,open,high,low,close,volume
- *
- * @param {string} filePath - CSV file path.
- * @param {Date} targetTime - Event time.
- * @returns {Promise<number>} - Position (in bytes) of the price closest to the target time.
- */
-async function binarySearchCSV(
-  filePath: string,
-  targetTime: Date
-): Promise<number> {
-  const stats = await statAsync(filePath);
-  let start = 0;
-  let end = stats.size;
-
-  let foundPosition = -1; // Inicializa con -1 para marcar si encontramos una posición válida
-
-  while (start <= end) {
-    const mid = Math.floor((start + end) / 2);
-    const chunkSize = 50000;
-    const buffer = Buffer.alloc(chunkSize);
-
-    const readPosition = Math.max(mid - chunkSize / 2, 0); // Leer un poco antes de la posición media
-    const fd = fs.openSync(filePath, 'r');
-    await readAsync(fd, buffer, 0, chunkSize, readPosition);
-
-    const chunk = buffer.toString('utf-8');
-
-    // Asegúrate de comenzar y terminar con líneas completas
-    const firstNewLineIndex = chunk.indexOf('\n');
-    const startLineIndex = firstNewLineIndex >= 0 ? firstNewLineIndex + 1 : 0;
-    const lastNewLineIndex = chunk.lastIndexOf('\n');
-    const endLineIndex =
-      lastNewLineIndex >= 0 ? lastNewLineIndex : chunk.length;
-    const relevantChunk = chunk.slice(startLineIndex, endLineIndex);
-
-    const rows = relevantChunk.split('\n');
-    fs.closeSync(fd);
-
-    let found = false;
-    for (const row of rows) {
-      if (!row.trim()) continue; // Saltar líneas vacías
-      const [timestamp] = row.split(',');
-      const time = new Date(parseInt(timestamp, 10));
-      if (time >= targetTime) {
-        found = true;
-        foundPosition = readPosition; // Marcar la posición donde encontramos el timestamp
-        break;
-      }
-    }
-
-    if (found) {
-      end = readPosition - 1; // Sigue buscando hacia la izquierda por la posible primera aparición
-    } else {
-      start = readPosition + chunkSize;
-    }
-  }
-
-  // Si encontramos una posición válida, ajustar para encontrar el principio de la línea más cercana
-  if (foundPosition !== -1) {
-    const buffer = Buffer.alloc(1000); // Tamaño pequeño para ajuste fino
-    const fd = fs.openSync(filePath, 'r');
-    await readAsync(fd, buffer, 0, 1000, foundPosition);
-    fs.closeSync(fd);
-    const chunk = buffer.toString('utf-8');
-    const startLineIndex = chunk.indexOf('\n') + 1; // Encontrar el principio de la primera línea completa
-    return foundPosition + startLineIndex;
-  }
-
-  return 0; // Si no se encuentra, regresar al principio
-}
 
 /**
  * Loads Bitcoin prices from a CSV file starting at a given position until a condition is met.
@@ -141,7 +47,7 @@ async function binarySearchCSV(
  * @param {string[]} headers - The headers of the CSV file.
  * @returns {Promise<PriceData[]>}
  */
-async function loadPricesFromPosition(
+export async function loadPricesFromPosition(
   filePath: string,
   startPosition: number,
   condition: (price: PriceData, entryPrice: number) => boolean,
@@ -180,22 +86,6 @@ async function loadPricesFromPosition(
       .on('error', (error) => reject(error));
   });
 }
-/**
- * Reads the header of a CSV file.
- *
- * @param {string} filePath - The path to the file to read.
- * @returns {Promise<string[]>}
- */
-async function readCSVHeader(filePath: string): Promise<string[]> {
-  return new Promise((resolve, reject) => {
-    fs.createReadStream(filePath, { start: 0, end: 1000 }) // Leer una pequeña parte del archivo
-      .pipe(csvParser())
-      .on('headers', (headers: string[]) => {
-        resolve(headers);
-      })
-      .on('error', (error) => reject(error));
-  });
-}
 
 /**
  * Backtests a trading strategy using historical events and Bitcoin prices.
@@ -218,12 +108,8 @@ async function backtest(
   const results: Result[] = [];
 
   const headers = await readCSVHeader(priceFilePath);
-  let i = 0;
+  // events = events.filter((event) => event.dateUtc >= '2024-06-01T00:00:00Z');
   for (const event of events) {
-    if (i === 131) {
-      logger.info('Event:', event);
-    }
-    i++;
     const eventTime = new Date(event.dateUtc);
     const startPosition = await binarySearchCSV(priceFilePath, eventTime);
 
@@ -261,7 +147,7 @@ async function backtest(
     let offset: number;
     if (event.eventId === 'fcfae951-09a7-449e-b6fe-525e1335aaba') {
       offset = OFFSET_FOMC;
-    } else if (event.eventId === '9ae5cf07-55da-4f0f-b21d-f6f0835731d9') {
+    } else if (event.eventId === '6f846eaa-9a12-43ab-930d-f059069c6646') {
       offset = OFFSET_CPI;
     } else if (event.eventId === '9cdf56fd-99e4-4026-aa99-2b6c0ca92811') {
       offset = OFFSET_NFP;
@@ -308,6 +194,7 @@ async function backtest(
     const action = leverage > 0 ? 'buy' : 'sell';
 
     let exitPrice = entryPrice;
+    let exitTime = eventTime;
     let exitDueToNoMovement = false;
 
     const returnThreshold =
@@ -322,12 +209,14 @@ async function backtest(
       if (leverage > 0) {
         if (price.high >= takeProfitPrice) {
           exitPrice = takeProfitPrice;
+          exitTime = price.timestamp;
           logger.info(
             `${event.name}: Take profit at ${takeProfitPrice}. Closing position.`
           );
           break;
         } else if (price.low <= stopLossPrice) {
           exitPrice = stopLossPrice;
+          exitTime = price.timestamp;
           logger.info(
             `${event.name}: Stop loss at ${stopLossPrice}. Closing position.`
           );
@@ -335,7 +224,15 @@ async function backtest(
         } else if (secondsSinceEntry >= 10) {
           if (price.high < returnThreshold) {
             exitPrice = price.close;
+            exitTime = price.timestamp;
             exitDueToNoMovement = true;
+            logger.info(
+              `${event.name}: No movement. Closing position at ${price.close}.`
+            );
+            break;
+          } else if (secondsSinceEntry >= 1500) {
+            exitPrice = price.close;
+            exitTime = price.timestamp;
             logger.info(
               `${event.name}: No movement. Closing position at ${price.close}.`
             );
@@ -345,12 +242,14 @@ async function backtest(
       } else {
         if (price.low <= takeProfitPrice) {
           exitPrice = takeProfitPrice;
+          exitTime = price.timestamp;
           logger.info(
             `${event.name}: Take profit at ${takeProfitPrice}. Closing position.`
           );
           break;
         } else if (price.high >= stopLossPrice) {
           exitPrice = stopLossPrice;
+          exitTime = price.timestamp;
           logger.info(
             `${event.name}: Stop loss at ${stopLossPrice}. Closing position.`
           );
@@ -358,7 +257,15 @@ async function backtest(
         } else if (secondsSinceEntry >= 10) {
           if (price.low > returnThreshold) {
             exitPrice = price.close;
+            exitTime = price.timestamp;
             exitDueToNoMovement = true;
+            logger.info(
+              `${event.name}: No movement. Closing position at ${price.close}.`
+            );
+            break;
+          } else if (secondsSinceEntry >= 1500) {
+            exitPrice = price.close;
+            exitTime = price.timestamp;
             logger.info(
               `${event.name}: No movement. Closing position at ${price.close}.`
             );
@@ -378,7 +285,8 @@ async function backtest(
       `${eventTime} - ${event.name}: Entry price: ${entryPrice}, Exit price: ${exitPrice}, Profit/Loss: ${profitOrLoss}`
     );
     results.push({
-      date: eventTime,
+      entryTime: eventTime,
+      exitTime,
       event: event.name,
       action: exitDueToNoMovement
         ? `${action} (closed due to no movement)`
@@ -396,7 +304,7 @@ async function backtest(
 // Main function
 (async () => {
   try {
-    const events = await readEvents('data/cleaned_history.json');
+    const events = (await readFromFile('data/cleaned_history.json')) as Event[];
     const priceFilePath = 'data/btc_1s_klines.csv';
     const backtestResults = await backtest(events, priceFilePath);
 

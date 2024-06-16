@@ -282,20 +282,23 @@ async function openMarketPosition(
   amount: number,
   direction = 1,
   targets: TargetOrder[] = [],
-  stops: StopOrder[] = []
+  stops: StopOrder[] = [],
+  priceId: string | null = null
 ): Promise<QuantfuryResponse | APIError> {
   if (NO_TRADING) {
     return { error: 'Trading is disabled', code: 'error' };
   }
-  const priceResponse = await getCurrentPrice();
-  if (!priceResponse) {
-    return { error: 'Failed to fetch current price', code: 'error' };
+  if (!priceId) {
+    const priceResponse = await getCurrentPrice();
+    if (!priceResponse) {
+      return { error: 'Failed to fetch current price', code: 'error' };
+    }
+    priceId = priceResponse.priceId;
   }
-
   const url = `https://e1.${BASE_URL}/positions/open`;
 
   const payload: PositionPayload = {
-    priceId: priceResponse.priceId,
+    priceId,
     value: {
       amountInstrument: amount,
     },
@@ -341,24 +344,28 @@ async function openMarketPosition(
  * Opens a long market position.
  *
  * @param {number} amount - The amount of the instrument.
+ * @param {string} [priceId=null] - The price ID to use for the position.
  * @returns {Promise<QuantfuryResponse | APIError>} A promise that resolves to the API response or an error.
  */
 export async function openMarketLongPosition(
-  amount: number
+  amount: number,
+  priceId: string | null = null
 ): Promise<QuantfuryResponse | APIError> {
-  return await openMarketPosition(amount, 1);
+  return await openMarketPosition(amount, 1, [], [], priceId);
 }
 
 /**
  * Opens a short market position.
  *
  * @param {number} amount - The amount of the instrument.
+ * @param {string} [priceId=null] - The price ID to use for the position.
  * @returns {Promise<QuantfuryResponse | APIError>} A promise that resolves to the API response or an error.
  */
 export async function openMarketShortPosition(
-  amount: number
+  amount: number,
+  priceId: string | null = null
 ): Promise<QuantfuryResponse | APIError> {
-  return await openMarketPosition(amount, 2);
+  return await openMarketPosition(amount, 2, [], [], priceId);
 }
 
 /**
@@ -454,9 +461,9 @@ export async function reducePosition(
  * @returns {Promise<QuantfuryResponse | APIError>} A promise that resolves to the API response or an error.
  */
 export async function closePosition(
-  id: string
+  id: string,
+  priceId: string = uuidv4()
 ): Promise<QuantfuryResponse | APIError> {
-  const priceId = uuidv4();
   const url = `https://e1.${BASE_URL}/positions/close`;
   const payload = { tradingPositionId: id, priceId };
 

@@ -198,7 +198,6 @@ export async function executeTradingStrategy(
 
   if ('data' in ret) {
     logger.info(ret.data);
-    console.log(ret.data);
     logger.info(
       `Successfully executed strategy: ${ret.data.position.amountInstrument} USDT at ${ret.data.operationPrice}`
     );

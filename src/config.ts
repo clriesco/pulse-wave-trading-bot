@@ -90,3 +90,6 @@ export const NO_RECURRENT_FETCH =
   process.env.NO_RECURRENT_FETCH === 'true' || false; // If true, the algorithm will only check the value once
 export const NO_PROXY = process.env.NO_PROXY === 'true' || false; // If true, the algorithm will not use a proxy
 export const NO_TRADING = process.env.NO_TRADING === 'true' || false; // If true, the algorithm will not execute trades
+
+export const QUANTFURY_HACK_PRICE_THRESHOLD =
+  Number(process.env.QUANTFURY_HACK_PRICE_THRESHOLD) || 20; // Threshold to trigger the Quantfury hack

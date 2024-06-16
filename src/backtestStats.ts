@@ -66,7 +66,7 @@ async function calculateStatistics(results: Result[]) {
   const avgLoss = totalLosingTrades ? totalLoss / totalLosingTrades : 0;
 
   const tradeDurations = results.map((r) =>
-    Math.abs(new Date(r.date).getTime() - new Date(r.date).getTime())
+    Math.abs(new Date(r.entryTime).getTime() - new Date(r.exitTime).getTime())
   );
   const avgTradeDuration =
     tradeDurations.reduce((acc, duration) => acc + duration, 0) / totalTrades;

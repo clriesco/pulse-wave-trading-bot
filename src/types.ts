@@ -176,7 +176,8 @@ export interface PriceData {
 
 export interface Result {
   event: string;
-  date: Date;
+  entryTime: Date;
+  exitTime: Date;
   action: string;
   entryPrice: number;
   exitPrice: number;
@@ -190,4 +191,25 @@ export interface GapDetail {
   previousTimestampOriginal: number;
   currentTimestampOriginal: number;
   gapInSeconds: number;
+}
+
+export interface TradeChartData {
+  entryIndex: number;
+  exitIndex: number;
+  prices: PriceData[];
+}
+
+export interface QuantfuryPrice {
+  id: string;
+  shortName: string;
+  price: number;
+  volume: number;
+  bid: number;
+  ask: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  date: string;
+  priceDate: string;
 }
