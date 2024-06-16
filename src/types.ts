@@ -57,12 +57,16 @@ export interface PositionPayload {
 
 export interface StopOrder {
   price: number;
-  amount: number;
+  value: {
+    amountInstrument: number;
+  };
 }
 
 export interface TargetOrder {
   price: number;
-  amount: number;
+  value: {
+    amountInstrument: number;
+  };
 }
 
 export interface Price {

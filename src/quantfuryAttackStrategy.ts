@@ -18,7 +18,7 @@
  *
  * ------------------------------------------------------------------------------*/
 import { Request, Response } from 'express';
-import { QuantfuryPrice, PositionData } from './types';
+import { QuantfuryPrice, PositionData, TargetOrder, StopOrder } from './types';
 import {
   AMOUNT,
   NO_TRADING,
@@ -29,16 +29,15 @@ import { getProxies } from './utils/proxy';
 import logger from './utils/logger';
 import {
   init as initQuantfury,
-  openMarketShortPosition,
-  openMarketLongPosition,
-  closePosition,
+  openExtendedMarketShortPosition,
+  openExtendedMarketLongPosition,
 } from './quantfury';
 
 const threshold = QUANTFURY_HACK_PRICE_THRESHOLD;
 let lastPrice: QuantfuryPrice | null = null;
 let currentPrice: QuantfuryPrice | null = null;
 let lastOperation: PositionData | null = null;
-let operationCompleted = false;
+const operationCompleted = false;
 
 export async function initStrategy() {
   const proxies = await getProxies();
@@ -108,28 +107,29 @@ async function executeTradingOperation(operationType: 'short' | 'long') {
     logger.info(
       `Opening ${operationType} position for ${lastPrice!.shortName} at ${lastPrice!.price}...`
     );
+    const target: TargetOrder = {
+      price: currentPrice!.price,
+      value: {
+        amountInstrument: AMOUNT,
+      },
+    };
+    const stop: StopOrder = {
+      price: currentPrice!.price,
+      value: {
+        amountInstrument: AMOUNT,
+      },
+    };
     const ret = await (
       operationType === 'short'
-        ? openMarketShortPosition
-        : openMarketLongPosition
-    )(AMOUNT, lastPrice!.id);
+        ? openExtendedMarketShortPosition
+        : openExtendedMarketLongPosition
+    )(AMOUNT, target, stop, lastPrice!.id);
 
     if (!('data' in ret)) {
       throw new Error(ret.error);
     }
 
     lastOperation = ret.data.position;
-
-    setTimeout(async () => {
-      if (lastOperation) {
-        await closePosition(lastOperation.id, currentPrice!.id);
-        operationCompleted = true;
-        lastOperation = null;
-        logger.info(
-          `Closed ${operationType} position for ${currentPrice!.shortName} at ${currentPrice!.price}...`
-        );
-      }
-    }, 2000);
   }
 }
 
@@ -202,6 +202,61 @@ export async function handlePrice(req: Request, res: Response) {
     return res.status(500).send({
       status: 'error',
       message: 'Error handling price',
+      error: `${error}`,
+    });
+  }
+}
+
+/**
+ * Tests the strategy by sending a limit order to Quantfury.
+ *
+ * @param {Request} req - The request object.
+ * @param {Response} res - The response object.
+ * @returns {Response} The response object.
+ */
+export async function testStrategy(req: Request, res: Response) {
+  try {
+    if (NO_TRADING) {
+      logger.info('MOCK Sending test order...');
+      return res.status(200).send({
+        status: 'success',
+        message: 'Test order sent',
+      });
+    }
+
+    const price: QuantfuryPrice = req.body;
+
+    logger.info('Sending test order...');
+    const ret = await openExtendedMarketShortPosition(
+      AMOUNT,
+      {
+        price: 66200,
+        value: {
+          amountInstrument: AMOUNT,
+        },
+      },
+      {
+        price: 66666,
+        value: {
+          amountInstrument: AMOUNT,
+        },
+      },
+      price.id
+    );
+
+    if (!('data' in ret)) {
+      throw new Error(ret.error);
+    }
+
+    return res.status(200).send({
+      status: 'success',
+      message: 'Test order sent',
+    });
+  } catch (error) {
+    logger.error(`Error testing strategy: ${error}`);
+    return res.status(500).send({
+      status: 'error',
+      message: 'Error testing strategy',
       error: `${error}`,
     });
   }

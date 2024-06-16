@@ -18,7 +18,11 @@
  *
  * ------------------------------------------------------------------------------*/
 import express from 'express';
-import { handlePrice } from './quantfuryAttackStrategy';
+import {
+  handlePrice,
+  testStrategy,
+  initStrategy,
+} from './quantfuryAttackStrategy';
 import cors from 'cors';
 const app = express();
 const PORT = 3000;
@@ -26,6 +30,9 @@ const PORT = 3000;
 app.use(express.json());
 app.use(cors());
 app.post('/prices', handlePrice);
+app.post('/test', testStrategy);
+
+initStrategy();
 
 app.listen(PORT, () => {
   console.log(`Listening in http://localhost:${PORT}`);

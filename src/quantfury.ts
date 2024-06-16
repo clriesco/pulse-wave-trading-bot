@@ -201,15 +201,15 @@ export async function openLimitShortPosition(
  *
  * @param {number} price - The price at which to open the position.
  * @param {number} amount - The amount of the instrument.
- * @param {number} stop - The stop order.
  * @param {number} target - The target order.
+ * @param {number} stop - The stop order.
  * @returns {Promise<QuantfuryResponse | APIError>} A promise that resolves to the API response or an error.
  */
 export async function openExtendedLimitLongPosition(
   price: number,
   amount: number,
-  stop: number,
-  target: number
+  target: number,
+  stop: number
 ): Promise<QuantfuryResponse | APIError> {
   return openLimitPosition(price, amount, 1, stop, target);
 }
@@ -219,15 +219,15 @@ export async function openExtendedLimitLongPosition(
  *
  * @param {number} price - The price at which to open the position.
  * @param {number} amount - The amount of the instrument.
- * @param {number} stop - The stop orders.
  * @param {number} target - The target orders.
+ * @param {number} stop - The stop orders.
  * @returns {Promise<QuantfuryResponse | APIError>} A promise that resolves to the API response or an error.
  */
 export async function openExtendedLimitShortPosition(
   price: number,
   amount: number,
-  stop: number,
-  target: number
+  target: number,
+  stop: number
 ): Promise<QuantfuryResponse | APIError> {
   return openLimitPosition(price, amount, 2, stop, target);
 }
@@ -374,30 +374,34 @@ export async function openMarketShortPosition(
  * @param {number} amount - The amount of the instrument.
  * @param {StopOrder} stop - The stop order.
  * @param {TargetOrder} target - The target order.
+ * @param {string} [priceId=null] - The price ID to use for the position.
  * @returns {Promise<QuantfuryResponse | APIError>} A promise that resolves to the API response or an error.
  */
 export async function openExtendedMarketLongPosition(
   amount: number,
+  target: TargetOrder,
   stop: StopOrder,
-  target: TargetOrder
+  priceId: string | null = null
 ): Promise<QuantfuryResponse | APIError> {
-  return await openMarketPosition(amount, 1, [target], [stop]);
+  return await openMarketPosition(amount, 1, [target], [stop], priceId);
 }
 
 /**
  * Opens an extended short market position with stop and target orders.
  *
  * @param {number} amount - The amount of the instrument.
- * @param {StopOrder} stop - The stop order.
  * @param {TargetOrder} target - The target order.
+ * @param {StopOrder} stop - The stop order.
+ * @param {string} [priceId=null] - The price ID to use for the position.
  * @returns {Promise<QuantfuryResponse | APIError>} A promise that resolves to the API response or an error.
  */
 export async function openExtendedMarketShortPosition(
   amount: number,
+  target: TargetOrder,
   stop: StopOrder,
-  target: TargetOrder
+  priceId: string | null = null
 ): Promise<QuantfuryResponse | APIError> {
-  return await openMarketPosition(amount, 2, [target], [stop]);
+  return await openMarketPosition(amount, 2, [target], [stop], priceId);
 }
 
 /**
