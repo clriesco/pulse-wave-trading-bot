@@ -24,7 +24,7 @@ import {
   reducePosition,
   init as initQuantfury,
 } from './quantfury';
-import { Proxy, PositionData, OrderType } from './types';
+import { Proxy, PositionData, OrderType, PositionType } from './types';
 import {
   CPI_VALUE_THRESHOLD,
   GDP_VALUE_THRESHOLD,
@@ -111,8 +111,14 @@ export async function launchAlgorithm(
  */
 export async function addTakeProfitStopLoss(position: PositionData) {
   const { id, openPrice } = position;
-  const stopLossPrice = Math.floor(openPrice * (1 - STOP_LOSS_PERCENTAGE));
-  const takeProfitPrice = Math.floor(openPrice * (1 + TAKE_PROFIT_PERCENTAGE));
+
+  let stopLossPrice = Math.floor(openPrice * (1 - STOP_LOSS_PERCENTAGE));
+  let takeProfitPrice = Math.floor(openPrice * (1 + TAKE_PROFIT_PERCENTAGE));
+
+  if (position.positionType === PositionType.SHORT) {
+    stopLossPrice = Math.floor(openPrice * (1 + STOP_LOSS_PERCENTAGE));
+    takeProfitPrice = Math.floor(openPrice * (1 - TAKE_PROFIT_PERCENTAGE));
+  }
 
   const tpResponse = await reducePosition(
     id,

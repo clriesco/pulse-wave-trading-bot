@@ -106,6 +106,11 @@ export enum OrderType {
   TARGET = 1,
 }
 
+export enum PositionType {
+  LONG = 1,
+  SHORT = 2,
+}
+
 export interface PositionData {
   amountInstrument: number;
   amountSystem: number;
@@ -115,7 +120,7 @@ export interface PositionData {
   isAverageOpenPrice: boolean;
   openDate: string;
   openPrice: number;
-  positionType: number;
+  positionType: PositionType;
   quantity: number;
   scalpingModeEndDate: number;
   sessionId: string;

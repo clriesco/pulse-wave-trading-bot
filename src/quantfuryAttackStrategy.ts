@@ -37,7 +37,8 @@ const threshold = QUANTFURY_HACK_PRICE_THRESHOLD;
 let lastPrice: QuantfuryPrice | null = null;
 let currentPrice: QuantfuryPrice | null = null;
 let lastOperation: PositionData | null = null;
-const operationCompleted = false;
+let operationCompleted = false;
+let operationInProgress = false;
 
 export async function initStrategy() {
   const proxies = await getProxies();
@@ -114,7 +115,7 @@ async function executeTradingOperation(operationType: 'short' | 'long') {
       },
     };
     const stop: StopOrder = {
-      price: currentPrice!.price,
+      price: lastPrice!.price,
       value: {
         amountInstrument: AMOUNT,
       },
@@ -141,16 +142,21 @@ async function executeTradingOperation(operationType: 'short' | 'long') {
  * @returns {Response} The response object.
  */
 export async function handlePrice(req: Request, res: Response) {
-  if (operationCompleted) {
-    return res.status(200).send({
-      status: 'no_action',
-      message: 'Operation already completed',
-    });
-  }
-
   try {
     currentPrice = req.body;
 
+    if (operationInProgress) {
+      return res.status(200).send({
+        status: 'no_action',
+        message: 'Operation in progress',
+      });
+    }
+    if (operationCompleted) {
+      return res.status(200).send({
+        status: 'no_action',
+        message: 'Operation already completed',
+      });
+    }
     if (!isValidPrice(currentPrice!)) {
       logger.error('Invalid price object');
       return res.status(400).send({
@@ -159,7 +165,6 @@ export async function handlePrice(req: Request, res: Response) {
         error: 'Price validation failed',
       });
     }
-
     if (lastOperation) {
       logger.info('No action during an open position');
       return res.status(200).send({
@@ -173,17 +178,22 @@ export async function handlePrice(req: Request, res: Response) {
       const operationType = determineOperationType(priceDifference);
 
       if (operationType) {
+        logger.info(`Last price: ${lastPrice.price}`);
+        logger.info(`Current price: ${currentPrice!.price}`);
         logger.info(
           `Price difference: ${priceDifference} - Triggering ${operationType} operation...`
         );
+        operationInProgress = true;
         await executeTradingOperation(operationType);
+        operationInProgress = false;
+        operationCompleted = true;
         const responseMessage = {
           status: 'success',
           message: 'Operation triggered',
           data: {
             operationType,
-            priceIni: lastPrice!.price,
-            priceEnd: currentPrice!.price,
+            openPrice: lastPrice!.price,
+            closePrice: currentPrice!.price,
           },
         };
         lastPrice = currentPrice; // Update lastPrice after processing the operation
@@ -199,6 +209,7 @@ export async function handlePrice(req: Request, res: Response) {
     });
   } catch (error) {
     logger.error(`Error handling price: ${error}`);
+    operationCompleted = true;
     return res.status(500).send({
       status: 'error',
       message: 'Error handling price',
@@ -251,6 +262,11 @@ export async function testStrategy(req: Request, res: Response) {
     return res.status(200).send({
       status: 'success',
       message: 'Test order sent',
+      data: {
+        operationType: 'short',
+        openPrice: price.price,
+        closePrice: '?',
+      },
     });
   } catch (error) {
     logger.error(`Error testing strategy: ${error}`);
